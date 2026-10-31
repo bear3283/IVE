@@ -1,0 +1,14 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.kotlin/
+*.keystore
+*.jks
+keystore.properties
+# apk/ 제출본만 추적
+*.apk
+!apk/*_release.apk
