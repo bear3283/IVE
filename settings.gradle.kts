@@ -11,3 +11,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "DriveScore"
 include(":scoring")
+include(":app")
