@@ -81,6 +81,14 @@ interface DriveDao {
     suspend fun totals(profileId: Long): List<Int>
     @Query("SELECT * FROM Trip WHERE profileId = :profileId ORDER BY startedAtMs DESC LIMIT 20")
     fun recentTrips(profileId: Long): Flow<List<Trip>>
+    @Query("SELECT * FROM Trip WHERE id = :id") suspend fun trip(id: Long): Trip?
+    @Query("SELECT * FROM TripEvent WHERE tripId = :tripId ORDER BY t") suspend fun events(tripId: Long): List<TripEvent>
+    @Query("SELECT * FROM TrackPoint WHERE tripId = :tripId ORDER BY t") suspend fun track(tripId: Long): List<TrackPoint>
+    /** 지난번 기록. 코스를 알면 같은 코스끼리 비교한다. */
+    @Query("SELECT * FROM Trip WHERE profileId = :profileId AND excluded = 0 AND startedAtMs < :before AND (:courseId IS NULL OR courseId = :courseId) ORDER BY startedAtMs DESC LIMIT 1")
+    suspend fun previousTrip(profileId: Long, before: Long, courseId: Long?): Trip?
+    @Query("SELECT total FROM Trip WHERE profileId = :profileId AND excluded = 0 AND startedAtMs < :before")
+    suspend fun totalsBefore(profileId: Long, before: Long): List<Int>
 
     @Transaction
     suspend fun saveTrip(t: Trip, events: (Long) -> List<TripEvent>, track: (Long) -> List<TrackPoint>): Long {
