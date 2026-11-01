@@ -35,7 +35,7 @@ class LiveSignalSource(
 
     private val steeringListener = object : SteeringWheelAngleListener {
         override fun onSteeringWheelAngleUpdated(angle: Float?) {
-            _state.update { it.copy(steeringDeg = angle?.toDouble()) }
+            _state.update { it.copy(steeringDeg = angle?.let { a -> a.toDouble() * STEERING_SIGN }) }
         }
         override fun onFailed(e: Exception) = fail("steering", e)
     }
@@ -133,5 +133,8 @@ class LiveSignalSource(
 
     private companion object {
         const val TAG = "LiveSignalSource"
+
+        /** SDK는 오른쪽 조향을 음수로 보낸다(Pleos 에뮬레이터 v2.1.0 실측). 앱 내부는 오른쪽 양수. 실차 확인 필요. */
+        const val STEERING_SIGN = -1.0
     }
 }

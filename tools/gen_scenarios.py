@@ -74,7 +74,7 @@ class Route:
         self.signal = "OFF"
         self.drive(7, to=then)
 
-    def wobble(self, peak=15.0, cycles=4, half=0.5):
+    def wobble(self, peak=15.0, cycles=3, half=1.0):
         for _ in range(cycles):
             self.drive(half, steer=lambda f: peak)
             self.drive(half, steer=lambda f: -peak)
@@ -99,7 +99,7 @@ def demo_short():
     r.cue("깜빡이 없이 조향 +30° 후 3초 안에 0°로 복귀")
     r.lane_change()
     r.drive(12)
-    r.cue("조향 ±15° 좌우로 4번 흔들기")
+    r.cue("조향 ±15° 좌우로 1초씩 3번 흔들기")
     r.wobble()
     r.drive(8)
     r.turn("turn-1", +1, cue="깜빡이 오른쪽 → 4초 뒤 조향 +200° → 0° 복귀 → 깜빡이 끄기")

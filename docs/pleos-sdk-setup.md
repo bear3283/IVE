@@ -42,12 +42,14 @@ implementation("ai.pleos.playground:SpeechToText:3.3.1")
 
 지원 여부: `checkSteeringWheelAngleCapabilities`, `checkTurnSignalStateCapabilities`, `checkBrakePedalStatusCapabilities`. Gear에는 capability 메서드가 없다.
 
-**[미확인]** 조향각 단위와 부호(왼쪽이 음수인지), 브레이크 `Boolean`이 Virtual Console의 몇 %에서 바뀌는지, 콜백 주기.
+에뮬레이터 실측(2026-11-01): 조향각 단위는 도, **부호는 콘솔 값과 반대**(콘솔 +30 → SDK -30). 콘솔에서 오른쪽으로 끌면 값이 커지므로 SDK는 오른쪽이 음수다. 실차 확인 필요.
+
+**[미확인]** 브레이크 `Boolean`이 Virtual Console의 몇 %에서 바뀌는지, 콜백 주기.
 
 ## 차속: AAOS [문서]
 
 `CarPropertyManager`의 `VehiclePropertyIds.PERF_VEHICLE_SPEED`(m/s). 권한은 `android.car.permission.CAR_SPEED`이며 위험 권한이라 런타임 요청이 필요하다.
-Virtual Console에는 현재 차속 카드가 없다.
+Virtual Console의 ACCEL 페달(`PUT /vehicle/controls?accelerator=30`, 기어 D)로 차속이 오르고 이 값이 `PERF_VEHICLE_SPEED`로 앱에 들어온다(2026-11-01 실측: 라이브 모드 8초 126m). `speed=` 파라미터는 값을 고정하지 않는다(40 지정 후 47→77km/h).
 
 ## NaviHelper 3.0.5 [AAR]
 
@@ -87,4 +89,7 @@ SDK 업데이트 사이트 "Pleos Connect System Image":
 
 Device Manager → Automotive → Pleos Connect v2.1.0, API 34, Cold boot, RAM 4GB.
 
-Virtual Console 조작 범위: 조향 -540~540°(1° 단위), 깜빡이(Off, 좌·우 Blink, 좌·우 Flash), 브레이크 0~100%, 기어 P/R/N/D. 위치·현재 차속 카드는 없다.
+Virtual Console 접속: `adb forward tcp:8088 tcp:8088` 후 브라우저에서 `http://127.0.0.1:8088/`. 페이지를 열어 둬야 활성화된다(1초마다 하트비트). 닫으면 `PUT /vehicle/...` 호출이 `emulator_inactive`를 반환한다.
+API(시연 자동화에 사용 가능): `PUT /vehicle/gear?gear=Drive`, `PUT /vehicle/controls?steering=30&brake=100`, `PUT /vehicle/turn-signal?mode=BlinkRight`. 상태는 `GET /vehicle/state`.
+
+Virtual Console 조작 범위: 조향 문서상 -540~540°, 카탈로그 실측 -470~500°(1° 단위), 깜빡이(Off, 좌·우 Blink, 좌·우 Flash), 브레이크 0~100%, 기어 P/R/N/D, 가속 페달. 위치 카드는 없다.

@@ -66,6 +66,23 @@ class ScenarioTest {
         assertTrue(p.durationSec in 90.0..130.0, "duration=${p.durationSec}")
     }
 
+    @Test fun `샘플링 위상이 달라도 시연 감점 결과는 같다`() {
+        val p = ScenarioPlayer(load("demo_short.json"))
+        for (phase in listOf(0.0, 0.03, 0.05, 0.07)) {
+            val out = mutableListOf<SignalSample>()
+            var t = phase
+            var odo = 0.0
+            while (t <= p.durationSec) {
+                val s = p.stateAt(t)
+                out += SignalSample(t, odo, s.speedKph ?: 0.0, s.steeringDeg, s.turnSignal, s.brakeOn, s.gear ?: Gear.P)
+                odo += (s.speedKph ?: 0.0) / 3.6 * 0.1
+                t += 0.1
+            }
+            val reasons = TripScorer().score(out, p.markers(), rules = GradeRules.forGrade(Grade.SKILLED)).penalties.map { it.reason }.toSet()
+            assertEquals(setOf(PenaltyReason.SIGNAL_MISSING, PenaltyReason.STEERING_WOBBLE, PenaltyReason.HARD_BRAKE), reasons, "phase=$phase")
+        }
+    }
+
     @Test fun `출근 시나리오는 회전 4번 이상이고 약 10분이다`() {
         val p = ScenarioPlayer(load("commute.json"))
         val r = TripScorer().score(samples(p), p.markers(), rules = GradeRules.forGrade(Grade.SKILLED))

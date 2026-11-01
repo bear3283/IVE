@@ -1,5 +1,6 @@
 package com.drivescore.data.signal
 
+import android.os.SystemClock
 import android.util.Log
 import com.drivescore.scoring.SignalCapabilities
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,7 @@ class ReplaySignalSource(
         if (autoStart) running = true
         val speed = player.scenario.playbackSpeed
         var nextCue = 0
+        var last = SystemClock.elapsedRealtime()
         val cues = player.scenario.scriptedEvents
         job = scope.launch {
             while (isActive) {
@@ -45,9 +47,12 @@ class ReplaySignalSource(
                         Log.i("DemoCue", cues[nextCue++].note)
                     }
                     _state.value = player.stateAt(scenarioT)
-                    scenarioT += TICK_MS / 1000.0 * speed
                 }
                 delay(TICK_MS)
+                // delay 횟수로 세면 실제 시간보다 느려져 누적거리가 시나리오와 어긋난다.
+                val now = SystemClock.elapsedRealtime()
+                if (running) scenarioT += (now - last) / 1000.0 * speed
+                last = now
             }
         }
     }
