@@ -136,19 +136,21 @@ class TripScorer(private val config: ScoringConfig = ScoringConfig()) {
             }.maxOrNull() ?: 0.0
         }
 
-        /** 창 안의 가속도가 조건을 넘는 연속 구간마다 가장 강한 지점 하나. */
+        /** 창 안의 가속도가 조건을 넘는 구간마다 가장 강한 지점 하나. 기준값 근처에서 잠깐 내려가도 같은 사건으로 본다. */
         fun findAccelEvents(over: (Double) -> Boolean): List<HardEvent> {
             val out = mutableListOf<HardEvent>()
             var current: HardEvent? = null
             var back = 0
+            var lastOverT = 0.0
             samples.forEachIndexed { i, s ->
                 while (back < i && s.t - samples[back + 1].t >= c.accelWindowSec - EPS) back++
                 val dt = s.t - samples[back].t
                 val a = if (dt >= c.accelWindowSec - EPS) (s.speedKph - samples[back].speedKph) / 3.6 / dt else 0.0
                 if (over(a)) {
                     if (current == null || abs(a) > current!!.mps2) current = HardEvent(s, abs(a))
-                } else {
-                    current?.let { out += it }
+                    lastOverT = s.t
+                } else if (current != null && s.t - lastOverT >= c.hardEventMergeSec) {
+                    out += current!!
                     current = null
                 }
             }

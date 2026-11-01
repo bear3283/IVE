@@ -25,6 +25,7 @@ class HybridSignalSource(
         job = scope.launch {
             combine(replay.state, live.state) { r, l ->
                 if (l.gear == Gear.D) replay.beginClock()
+                if (l.gear == Gear.P) replay.resetClock()
                 l.copy(speedKph = r.speedKph, lat = r.lat, lng = r.lng)
             }.collect { _state.value = it }
         }

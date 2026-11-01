@@ -11,6 +11,17 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 정차 중 음성 명령(F-14) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Pleos TTS/STT SDK가 호출 전에 검사한다(2026-11-02 실측). -->
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+    <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
+
+    <queries>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+        <intent><action android:name="android.speech.RecognitionService" /></intent>
+    </queries>
+
     <application
         android:name=".DriveScoreApp"
         android:label="@string/app_name"

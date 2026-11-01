@@ -20,7 +20,14 @@ import com.drivescore.domain.TripDetails
 
 /** F-09. 총점 카운트업, 항목별 별점, 배지, 지난번 대비. */
 @Composable
-fun ResultScreen(details: TripDetails, onReplay: () -> Unit, onClose: () -> Unit) {
+fun ResultScreen(
+    details: TripDetails,
+    listening: Boolean,
+    caption: String?,
+    onMic: () -> Unit,
+    onReplay: () -> Unit,
+    onClose: () -> Unit,
+) {
     val count = remember(details.trip.id) { Animatable(0f) }
     LaunchedEffect(details.trip.id) { count.animateTo(details.trip.total.toFloat(), tween(1500)) }
 
@@ -56,6 +63,7 @@ fun ResultScreen(details: TripDetails, onReplay: () -> Unit, onClose: () -> Unit
                 }
             }
             Spacer(Modifier.weight(1f))
+            VoiceBar(listening, caption, stringResource(R.string.mic_hint_result), onMic, Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Button(onReplay, Modifier.heightIn(min = 88.dp).weight(1f)) { Text(stringResource(R.string.action_replay), fontSize = 28.sp) }
                 OutlinedButton(onClose, Modifier.heightIn(min = 88.dp).weight(1f)) { Text(stringResource(R.string.action_close), fontSize = 28.sp) }

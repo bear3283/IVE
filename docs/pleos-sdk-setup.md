@@ -79,7 +79,15 @@ Virtual Console의 ACCEL 페달(`PUT /vehicle/controls?accelerator=30`, 기어 D
 - 순서: 생성 → `initialize(listener)` → 리스너 등록 → (`setLocale`) → `speak` / `request`.
 - 두 AAR 모두 `android.permission.INTERNET`을 매니페스트에 포함한다. [AAR]
 
-**[미확인]** 에뮬레이터에서 `ON_DEVICE` 한국어 동작 여부.
+- 권한 `pleos.car.permission.TTS_SERVICE`, `pleos.car.permission.STT_SERVICE`(prot=normal). 없으면 `initialize`에서 SecurityException. STT는 `RECORD_AUDIO`도 필요. [AAR]
+
+에뮬레이터 실측(2026-11-02):
+- TTS `ON_DEVICE`는 Client ID 없이 한국어로 동작한다(AudioTrack 기록 확인).
+- **로케일은 `Locale.KOREA`(ko_KR)여야 한다.** `Locale.KOREAN`은 `unsupported locale: ko-`로 `ON_DEVICE_ENGINE_ERROR`가 난다.
+- 오류는 `onStart` 뒤에 올 수 있다.
+- STT는 `request()` 후 마이크가 열리기까지 2초 넘게 걸린다.
+
+**[미확인]** STT `ON_DEVICE`의 실제 인식 결과. 엔진은 오류 없이 돌지만 시험에서 음성이 입력되지 않아 빈 결과만 받았다.
 
 ## 에뮬레이터 [문서]
 

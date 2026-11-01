@@ -90,6 +90,10 @@ interface DriveDao {
     @Query("SELECT total FROM Trip WHERE profileId = :profileId AND excluded = 0 AND startedAtMs < :before")
     suspend fun totalsBefore(profileId: Long, before: Long): List<Int>
 
+    @Query("SELECT id FROM Trip WHERE profileId = :profileId ORDER BY startedAtMs DESC LIMIT 1") suspend fun latestTripId(profileId: Long): Long?
+    @Query("SELECT MAX(total) FROM Trip WHERE courseId = :courseId AND excluded = 0") suspend fun bestTotal(courseId: Long): Int?
+    @Query("UPDATE Trip SET excluded = :excluded WHERE id = :id") suspend fun setExcluded(id: Long, excluded: Boolean)
+
     @Transaction
     suspend fun saveTrip(t: Trip, events: (Long) -> List<TripEvent>, track: (Long) -> List<TrackPoint>): Long {
         val id = insert(t)

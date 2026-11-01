@@ -26,6 +26,7 @@ class ReplaySignalSource(
     private var job: Job? = null
     @Volatile private var running = false
     private var scenarioT = 0.0
+    private var nextCue = 0
 
     fun beginClock() {
         if (!running) {
@@ -34,10 +35,19 @@ class ReplaySignalSource(
         }
     }
 
+    /** 주행이 끝나면 처음으로 돌아간다. 다음 D에서 같은 코스를 다시 달린다. */
+    fun resetClock() {
+        if (running && !autoStart) {
+            running = false
+            scenarioT = 0.0
+            nextCue = 0
+            _state.value = player.stateAt(0.0)
+        }
+    }
+
     override fun start() {
         if (autoStart) running = true
         val speed = player.scenario.playbackSpeed
-        var nextCue = 0
         var last = SystemClock.elapsedRealtime()
         val cues = player.scenario.scriptedEvents
         job = scope.launch {

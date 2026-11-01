@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.SystemClock
 import android.util.Log
 import com.drivescore.data.db.*
+import com.drivescore.data.navi.Destination
 import com.drivescore.data.navi.NaviSource
 import com.drivescore.data.navi.PleosNaviSource
 import com.drivescore.data.navi.ReplayNaviSource
@@ -19,6 +20,12 @@ import java.io.File
 import java.io.PrintWriter
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** 내비가 알려 준 지금 경로. */
+data class RouteInfo(val destination: Destination, val markers: List<RouteMarker>)
+
+/** 주행 중 위치 진행. F-06 예고가 쓴다. */
+data class TripProgress(val odoM: Double = 0.0, val speedKph: Double = 0.0)
 
 /** F-03 주행 기록. 10Hz로 샘플을 파일에 쌓고, P 진입 시 채점해 Room에 저장한다. 오프라인으로 동작한다. */
 @Singleton
@@ -44,6 +51,13 @@ class TripRecorder @Inject constructor(
     private val _profileId = MutableStateFlow<Long?>(null)
     val profileId: StateFlow<Long?> = _profileId.asStateFlow()
 
+    private val _route = MutableStateFlow<RouteInfo?>(null)
+    val route: StateFlow<RouteInfo?> = _route.asStateFlow()
+    private val _progress = MutableStateFlow(TripProgress())
+    val progress: StateFlow<TripProgress> = _progress.asStateFlow()
+    /** "이번엔 기록하지 마"를 출발 전에 말한 경우. 다음 주행 한 건에 적용한다. */
+    @Volatile private var skipNextTrip = false
+
     private val tripsDir get() = File(context.filesDir, "trips").apply { mkdirs() }
 
     /** 현재 설정의 소스로 기록을 (다시) 시작한다. */
@@ -67,6 +81,7 @@ class TripRecorder @Inject constructor(
         navi?.stop()
         signal = null
         navi = null
+        _route.value = null
     }
 
     fun dismissResult() {
@@ -83,6 +98,32 @@ class TripRecorder @Inject constructor(
 
     private suspend fun ensureProfile(): DriverProfile =
         dao.firstProfile() ?: DriverProfile(name = "운전자 1").let { it.copy(id = dao.insert(it)) }
+
+    /** 지금 경로와 같은 저장 코스. 새 코스를 만들지는 않는다. */
+    suspend fun findCourseId(): Long? {
+        val route = _route.value ?: return null
+        val profile = _profileId.value ?: return null
+        val turns = route.markers.filter { it.type in TURN_TYPES }.map { it.type }
+        return CourseMatcher().findMatch(CourseSignature(route.destination.lat, route.destination.lng, turns), signatures(profile))
+    }
+
+    private suspend fun signatures(profileId: Long) = dao.courses(profileId).associate { c ->
+        c.id to CourseSignature(c.destLat, c.destLng, c.turns.split(",").filter { it.isNotEmpty() }.map(MarkerType::valueOf))
+    }
+
+    /** 표시 등급과 다음 등급 조건. 시연 시드를 반영한다. */
+    suspend fun gradeProgress(): Pair<Grade, GradeProgress> {
+        val profile = ensureProfile()
+        val progress = GradeEngine().evaluate(dao.totals(profile.id))
+        return maxOf(progress.current, Grade.valueOf(profile.minGrade)) to progress
+    }
+
+    /** @param tripId 도착 후 결과를 보고 있으면 그 주행. 없으면 다음 주행을 제외한다. */
+    suspend fun skipRecord(tripId: Long?) {
+        if (tripId != null) dao.setExcluded(tripId, true) else skipNextTrip = true
+    }
+
+    fun canListen() = context.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
     private fun createSources(): Pair<VehicleSignalSource, NaviSource> {
         fun player() = ScenarioPlayer(
@@ -124,6 +165,9 @@ class TripRecorder @Inject constructor(
                 logChanges(previous, st)
                 previous = st
                 _gear.value = st.gear
+                val dest = nav.destination.value
+                val routeNow = dest?.let { RouteInfo(it, nav.markers.value) }
+                if (routeNow != _route.value) _route.value = routeNow
 
                 val destinationEvent = if (nav.destination.value != null) SessionEvent.DestinationSet else SessionEvent.DestinationCleared
                 var session = SessionStateMachine.next(_session.value, destinationEvent)
@@ -157,6 +201,7 @@ class TripRecorder @Inject constructor(
                     }
                     t += dt
                     odo += speed / 3.6 * dt
+                    _progress.value = TripProgress(odo, speed)
                 } else if (session == Session.SCORING) {
                     writer?.close()
                     writer = null
@@ -197,6 +242,7 @@ class TripRecorder @Inject constructor(
             difficulty = result.difficulty,
             grade = grade.name,
             itemsJson = TripCodec.encodeItems(result.items),
+            excluded = skipNextTrip.also { skipNextTrip = false },
         )
         return dao.saveTrip(
             trip,
@@ -206,12 +252,8 @@ class TripRecorder @Inject constructor(
     }
 
     private suspend fun matchCourse(profileId: Long, name: String, lat: Double, lng: Double, markers: List<RouteMarker>): Long {
-        val turnTypes = setOf(MarkerType.TURN_LEFT, MarkerType.TURN_RIGHT, MarkerType.U_TURN)
-        val turns = markers.filter { it.type in turnTypes }.map { it.type }
-        val existing = dao.courses(profileId).associate { c ->
-            c.id to CourseSignature(c.destLat, c.destLng, c.turns.split(",").filter { it.isNotEmpty() }.map(MarkerType::valueOf))
-        }
-        return CourseMatcher().findMatch(CourseSignature(lat, lng, turns), existing)
+        val turns = markers.filter { it.type in TURN_TYPES }.map { it.type }
+        return CourseMatcher().findMatch(CourseSignature(lat, lng, turns), signatures(profileId))
             ?: dao.insert(Course(profileId = profileId, name = name, destLat = lat, destLng = lng, turns = turns.joinToString(",")))
     }
 
@@ -249,5 +291,6 @@ class TripRecorder @Inject constructor(
     private companion object {
         const val TICK_MS = 100L
         const val LOG_SIZE = 40
+        val TURN_TYPES = setOf(MarkerType.TURN_LEFT, MarkerType.TURN_RIGHT, MarkerType.U_TURN)
     }
 }
