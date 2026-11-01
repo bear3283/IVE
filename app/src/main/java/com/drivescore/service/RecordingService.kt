@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import com.drivescore.R
 import com.drivescore.domain.TripRecorder
+import com.drivescore.domain.VoiceCoach
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -18,6 +19,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class RecordingService : Service() {
     @Inject lateinit var recorder: TripRecorder
+    @Inject lateinit var coach: VoiceCoach
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -34,6 +36,7 @@ class RecordingService : Service() {
         val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
         ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
         recorder.restart()
+        coach.start()
         return START_STICKY
     }
 

@@ -39,7 +39,14 @@ private const val CHART_MAX_KPH = 120f
 
 /** F-08. 호출자가 주행 중에는 이 화면을 구성에서 빼므로 재생은 그 즉시 멈춘다. */
 @Composable
-fun ReplayScreen(details: TripDetails, onFinished: () -> Unit) {
+fun ReplayScreen(
+    details: TripDetails,
+    listening: Boolean,
+    nextRequests: kotlinx.coroutines.flow.Flow<Unit>,
+    onMic: () -> Unit,
+    onActivePenalty: (com.drivescore.scoring.Penalty?) -> Unit,
+    onFinished: () -> Unit,
+) {
     val timeline = remember(details.trip.id) { ReplayTimeline.build(details.trip.durationSec, details.penalties) }
     val track = details.track
     val times = remember(track) { DoubleArray(track.size) { track[it].t } }
@@ -63,6 +70,15 @@ fun ReplayScreen(details: TripDetails, onFinished: () -> Unit) {
     val t = timeline.tripTimeAt(play)
     val point = track.getOrNull(ReplayGeometry.indexAt(times, t))
     val active = activePenalty(details.penalties, t)
+    LaunchedEffect(active) { onActivePenalty(active) }
+    val currentTime by rememberUpdatedState(t)
+    LaunchedEffect(nextRequests) {
+        nextRequests.collect {
+            details.penalties.firstOrNull { it.t - PENALTY_COLOR_SEC > currentTime + 0.5 }?.let {
+                play = timeline.playTimeOf((it.t - PENALTY_COLOR_SEC).coerceAtLeast(0.0))
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(Palette.Background).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -87,6 +103,7 @@ fun ReplayScreen(details: TripDetails, onFinished: () -> Unit) {
             }
             Text(stringResource(R.string.replay_speed, timeline.speedAt(t)), color = Palette.Muted, fontSize = 26.sp, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(Modifier.weight(1f))
+            MicButton(listening, onMic)
             OutlinedButton(onFinished, Modifier.heightIn(min = 80.dp)) { Text(stringResource(R.string.action_result), fontSize = 26.sp) }
         }
     }

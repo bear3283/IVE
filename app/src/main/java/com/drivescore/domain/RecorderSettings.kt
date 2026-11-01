@@ -17,4 +17,8 @@ class RecorderSettings @Inject constructor(@ApplicationContext context: Context)
     var scenario: String
         get() = prefs.getString("scenario", null) ?: "demo_short.json"
         set(v) = prefs.edit().putString("scenario", v).apply()
+
+    var voiceLevel: VoiceLevel
+        get() = runCatching { VoiceLevel.valueOf(prefs.getString("voiceLevel", null) ?: "") }.getOrDefault(VoiceLevel.ALL)
+        set(v) = prefs.edit().putString("voiceLevel", v.name).apply()
 }

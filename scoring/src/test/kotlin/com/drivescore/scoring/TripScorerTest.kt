@@ -53,6 +53,19 @@ class TripScorerTest {
         assertTrue(r.penalties.any { it.reason == PenaltyReason.HARD_BRAKE_AFTER_LANE_CHANGE })
     }
 
+    @Test fun `기준 근처에서 끊긴 감속은 급정지 한 건이고 멀리 떨어지면 두 건이다`() {
+        fun rate(t: Double) = if (t in 5.0..6.5 || t in 7.5..9.0 || t in 30.0..31.5) -6.0 else 0.0
+        var speed = 120.0
+        var odo = 0.0
+        val samples = (0..400).map { i ->
+            val t = i * 0.1
+            speed = (speed + rate(t) * 3.6 * 0.1).coerceAtLeast(0.0)
+            odo += speed / 3.6 * 0.1
+            SignalSample(t, odo, speed, 0.0, TurnSignal.OFF, rate(t) < 0, Gear.D, null, null)
+        }
+        assertEquals(2, scorer.score(samples, rules = BEGINNER).penalties.count { it.reason == PenaltyReason.HARD_BRAKE })
+    }
+
     @Test fun `페달을 안 밟은 감속은 급정지가 아니다`() {
         val b = trip { hold(5.0, 60.0); ramp(2.5, 60.0, 0.0, brake = false); hold(3.0, 0.0) }
         assertFalse(scorer.score(b.samples, rules = BEGINNER).penalties.any { it.reason == PenaltyReason.HARD_BRAKE })
