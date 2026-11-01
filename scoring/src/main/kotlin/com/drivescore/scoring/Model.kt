@@ -39,7 +39,7 @@ data class Maneuver(
     val direction: Int = 0,
 )
 
-enum class Category { TURN, LANE_CHANGE, SMOOTH, CAMERA, STRAIGHT, DECEL_PREP }
+enum class Category { SIGNAL, CAMERA, SMOOTH, STEERING, DECEL_PREP }
 
 enum class PenaltyReason {
     SIGNAL_MISSING,
@@ -61,7 +61,8 @@ data class Penalty(
     val reason: PenaltyReason,
     val t: Double,
     val odoM: Double,
-    val severity: Double,
+    /** 거리 계수를 적용하기 전의 차감 점수. */
+    val deduction: Double,
     val observed: Map<String, Double> = emptyMap(),
     val lat: Double? = null,
     val lng: Double? = null,
@@ -84,8 +85,11 @@ data class ItemScore(
 
 data class TripResult(
     val total: Int,
-    val difficulty: Double,
     val items: List<ItemScore>,
     val penalties: List<Penalty>,
     val maneuvers: List<Maneuver>,
+    /** 평가한 동작마다 깜빡이를 미리 켠 시간. 등급 과제에 쓴다. */
+    val signalLeadsSec: List<Double> = emptyList(),
+    /** 짧고 평가 기회도 적어 기록과 등급에 넣지 않는 주행. */
+    val lowSample: Boolean = false,
 )

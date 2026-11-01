@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.drivescore.R
 import com.drivescore.domain.TripDetails
+import com.drivescore.scoring.ScoringConfig
+import kotlin.math.roundToInt
 
 private const val MAX_PENALTY_LINES = 3
 
@@ -58,6 +60,7 @@ fun ResultScreen(
                     )
                 }
             }
+            if (details.trip.lowSample) Text(stringResource(R.string.low_sample), color = Palette.Muted, fontSize = 30.sp)
             Spacer(Modifier.weight(1f))
             VoiceBar(listening, caption, stringResource(R.string.mic_hint_result), onMic, Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(TouchGap)) {
@@ -80,7 +83,13 @@ fun ResultScreen(
                 }
             }
             if (details.penalties.isEmpty()) Text(stringResource(R.string.no_penalty), color = Palette.Good, fontSize = 36.sp)
-            details.penalties.take(MAX_PENALTY_LINES).forEach { Text(it.describe(), color = Palette.Text, fontSize = 34.sp) }
+            val factor = remember(details.trip.id) { ScoringConfig().distanceFactor(details.trip.distanceM / 1000) }
+            details.penalties.sortedByDescending { it.deduction }.take(MAX_PENALTY_LINES).forEach { p ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(p.describe(), color = Palette.Text, fontSize = 34.sp, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.deduction_points, (p.deduction * factor).roundToInt()), color = Palette.Bad, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                }
+            }
             val more = details.penalties.size - MAX_PENALTY_LINES
             if (more > 0) Text(stringResource(R.string.penalties_more, more), color = Palette.Muted, fontSize = 30.sp)
         }

@@ -10,7 +10,6 @@ data class Briefing(
     val markers: List<RouteMarker>,
     val turns: Int,
     val cameras: Int,
-    val difficultyStars: Int,
     val knownCourse: Boolean,
     val lastTotal: Int?,
     val bestTotal: Int?,
@@ -46,7 +45,7 @@ class VoiceLines(private val text: (Int, Array<out Any>) -> String) {
     }
 
     fun reason(p: Penalty): String {
-        val lead = p.observed["leadSec"]
+        val lead = p.observed["leadM"]
         val peak = p.observed["peakDeg"]
         return when (p.reason) {
             PenaltyReason.SIGNAL_MISSING -> s(R.string.reason_signal_missing)
@@ -67,7 +66,7 @@ class VoiceLines(private val text: (Int, Array<out Any>) -> String) {
     /** "왜 감점됐어?" 큰 감점부터 서로 다른 이유 최대 세 개. */
     fun why(penalties: List<Penalty>): String =
         if (penalties.isEmpty()) s(R.string.no_penalty)
-        else penalties.sortedByDescending { it.severity }.distinctBy { it.reason }.take(MAX_WHY).joinToString(" ") { reason(it) + "." }
+        else penalties.sortedByDescending { it.deduction }.distinctBy { it.reason }.take(MAX_WHY).joinToString(" ") { reason(it) + "." }
 
     fun compare(total: Int, previous: Int?): String {
         val diff = previous?.let { total - it }
@@ -93,11 +92,10 @@ class VoiceLines(private val text: (Int, Array<out Any>) -> String) {
 
     @StringRes
     private fun mission(c: Category) = when (c) {
-        Category.TURN -> R.string.mission_turn
-        Category.LANE_CHANGE -> R.string.mission_lane
+        Category.SIGNAL -> R.string.mission_signal
         Category.SMOOTH -> R.string.mission_smooth
         Category.CAMERA -> R.string.mission_camera
-        Category.STRAIGHT -> R.string.mission_straight
+        Category.STEERING -> R.string.mission_straight
         Category.DECEL_PREP -> R.string.mission_decel
     }
 

@@ -17,7 +17,10 @@ import javax.inject.Singleton
 object AppModule {
     @Provides @Singleton
     fun database(@ApplicationContext context: Context): DriveDatabase =
-        Room.databaseBuilder(context, DriveDatabase::class.java, "drive.db").build()
+        Room.databaseBuilder(context, DriveDatabase::class.java, "drive.db")
+            // 아직 배포 전이라 스키마가 바뀌면 지운다. 첫 배포 후에는 마이그레이션을 작성할 것.
+            .fallbackToDestructiveMigration()
+            .build()
 
     @Provides
     fun dao(db: DriveDatabase): DriveDao = db.dao()

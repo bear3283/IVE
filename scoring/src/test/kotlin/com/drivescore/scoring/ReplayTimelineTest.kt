@@ -3,7 +3,7 @@ package com.drivescore.scoring
 import kotlin.test.*
 
 class ReplayTimelineTest {
-    private fun p(t: Double, severity: Double = 1.0) = Penalty(Category.STRAIGHT, PenaltyReason.STEERING_WOBBLE, t, 0.0, severity)
+    private fun p(t: Double, deduction: Double = 1.0) = Penalty(Category.STEERING, PenaltyReason.STEERING_WOBBLE, t, 0.0, deduction)
 
     @Test fun `감점 전후 5초만 1배속이고 시간 축이 빠짐없이 이어진다`() {
         val tl = ReplayTimeline.build(92.0, listOf(p(15.0), p(30.0), p(88.0)))
@@ -54,16 +54,27 @@ class ReplayTimelineTest {
 }
 
 class BadgesTest {
-    private val turn = ItemScore(Category.TURN, 25.0, 25.0, 5, false)
-    private val lane = ItemScore(Category.LANE_CHANGE, 20.0, 0.0, 1, false)
-    private val missing = Penalty(Category.LANE_CHANGE, PenaltyReason.SIGNAL_MISSING, 1.0, 1.0, 1.0)
+    private val turn = ItemScore(Category.SIGNAL, 30.0, 30.0, 5, false)
+    private val missing = Penalty(Category.SIGNAL, PenaltyReason.SIGNAL_MISSING, 1.0, 1.0, 8.0)
 
-    @Test fun `시연처럼 차선변경만 놓치면 회전 배지만 받는다`() {
-        assertEquals(listOf(Badge.TURN_PERFECT), BadgeRules.award(51, listOf(turn, lane), listOf(missing), 985.0, listOf(60)))
+    @Test fun `깜빡이를 놓치면 깜빡이 배지를 받지 않는다`() {
+        assertEquals(emptyList(), BadgeRules.award(51, listOf(turn), listOf(missing), 985.0, listOf(60)))
     }
 
-    @Test fun `무감점이고 최고 기록이면 모두 받는다`() {
-        assertEquals(Badge.entries.toSet(), BadgeRules.award(100, listOf(turn), emptyList(), 985.0, listOf(60)).toSet())
+    @Test fun `무감점, 등급 과제, 최고 기록이면 모두 받는다`() {
+        assertEquals(Badge.entries.toSet(), BadgeRules.award(100, listOf(turn), emptyList(), 985.0, listOf(60), challengePassed = true).toSet())
+    }
+
+    @Test fun `표본이 적은 주행은 배지가 없다`() {
+        assertTrue(BadgeRules.award(100, listOf(turn), emptyList(), 985.0, listOf(60), lowSample = true).isEmpty())
+    }
+
+    @Test fun `등급 과제는 모든 동작에서 등급 시간을 지켜야 한다`() {
+        val rules = GradeRules.forGrade(Grade.SKILLED)
+        fun r(vararg leads: Double) = TripResult(90, emptyList(), emptyList(), emptyList(), leads.toList())
+        assertTrue(BadgeRules.challengePassed(rules, r(4.0, 5.0)))
+        assertFalse(BadgeRules.challengePassed(rules, r(4.0, 3.9)))
+        assertFalse(BadgeRules.challengePassed(rules, r()))
     }
 
     @Test fun `첫 주행은 최고 기록이 아니고 짧은 이동은 배지가 없다`() {

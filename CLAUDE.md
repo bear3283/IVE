@@ -62,7 +62,7 @@ Virtual Console에는 위치·내비 조작이 없고 차속은 가속 페달로
 ## 코드 규칙
 
 - Kotlin, Coroutines + Flow, Jetpack Compose, Hilt, Room. 새 라이브러리는 필요할 때만, 이유를 커밋 메시지에 적는다.
-- `:scoring`의 모든 임계값(각도, 시간, 배점)은 하드코딩하지 말고 `ScoringConfig` / `GradeRules` 데이터 클래스로 주입한다. 등급·캘리브레이션이 이 값을 바꾼다.
+- `:scoring`의 모든 임계값(각도, 시간, 배점)은 하드코딩하지 말고 `ScoringConfig` / `GradeRules` 데이터 클래스로 주입한다. 캘리브레이션이 이 값을 바꾼다. 등급은 점수 기준을 바꾸지 않고 과제와 진입 조건만 정한다.
 - UI 문자열은 한국어, `strings.xml`에 둔다. 코드 식별자는 영어.
 - 터치 타깃은 크게(최소 76dp 권장), 고대비, 텍스트 최소화. Pleos Connect UI 디자인 가이드를 따른다.
 - 화면 크기는 Devbox 기준 2560×1440 가로. 폼팩터 테스트로 다른 해상도도 확인.

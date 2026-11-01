@@ -52,7 +52,7 @@ class ScenarioTest {
 
     @Test fun `시연 시나리오는 의도한 감점만 낸다`() {
         val p = ScenarioPlayer(load("demo_short.json"))
-        val r = TripScorer().score(samples(p), p.markers(), rules = GradeRules.forGrade(Grade.SKILLED))
+        val r = TripScorer().score(samples(p), p.markers())
         val types = r.maneuvers.map { it.type }
         assertEquals(1, types.count { it == ManeuverType.LANE_CHANGE }, "$types")
         assertEquals(1, types.count { it == ManeuverType.WOBBLE }, "$types")
@@ -61,9 +61,10 @@ class ScenarioTest {
         assertTrue(PenaltyReason.SIGNAL_MISSING in reasons, "$reasons")
         assertTrue(PenaltyReason.STEERING_WOBBLE in reasons, "$reasons")
         assertTrue(PenaltyReason.HARD_BRAKE in reasons, "$reasons")
-        assertFalse(r.penalties.any { it.category == Category.TURN }, "${r.penalties}")
         assertEquals(setOf(PenaltyReason.SIGNAL_MISSING, PenaltyReason.STEERING_WOBBLE, PenaltyReason.HARD_BRAKE), reasons.toSet(), "$reasons")
         assertTrue(p.durationSec in 90.0..130.0, "duration=${p.durationSec}")
+        // 깜빡이 미사용 8 + 흔들림 5 + 급정지 6
+        assertEquals(81, r.total, "${r.penalties}")
     }
 
     @Test fun `샘플링 위상이 달라도 시연 감점 결과는 같다`() {
@@ -78,14 +79,14 @@ class ScenarioTest {
                 odo += (s.speedKph ?: 0.0) / 3.6 * 0.1
                 t += 0.1
             }
-            val reasons = TripScorer().score(out, p.markers(), rules = GradeRules.forGrade(Grade.SKILLED)).penalties.map { it.reason }.toSet()
+            val reasons = TripScorer().score(out, p.markers()).penalties.map { it.reason }.toSet()
             assertEquals(setOf(PenaltyReason.SIGNAL_MISSING, PenaltyReason.STEERING_WOBBLE, PenaltyReason.HARD_BRAKE), reasons, "phase=$phase")
         }
     }
 
     @Test fun `출근 시나리오는 회전 4번 이상이고 약 10분이다`() {
         val p = ScenarioPlayer(load("commute.json"))
-        val r = TripScorer().score(samples(p), p.markers(), rules = GradeRules.forGrade(Grade.SKILLED))
+        val r = TripScorer().score(samples(p), p.markers())
         val turns = r.maneuvers.count { it.type == ManeuverType.TURN_LEFT || it.type == ManeuverType.TURN_RIGHT }
         assertTrue(turns >= 4, "turns=$turns")
         assertTrue(p.durationSec in 400.0..720.0, "duration=${p.durationSec}")

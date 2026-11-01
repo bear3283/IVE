@@ -43,8 +43,4 @@ class TripBuilder {
 
 fun trip(block: TripBuilder.() -> Unit): TripBuilder = TripBuilder().apply(block)
 
-val BEGINNER = GradeRules.forGrade(Grade.BEGINNER)
-val SKILLED = GradeRules.forGrade(Grade.SKILLED)
-val VETERAN = GradeRules.forGrade(Grade.VETERAN)
-val MASTER = GradeRules.forGrade(Grade.MASTER)
 val CFG = ScoringConfig()
