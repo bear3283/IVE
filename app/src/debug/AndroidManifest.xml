@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- debug 빌드 전용. 마이크 없이 음성 명령 흐름을 확인한다. -->
+        <receiver android:name=".DebugTranscriptReceiver" android:exported="true" />
+    </application>
+</manifest>
