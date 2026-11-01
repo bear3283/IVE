@@ -73,7 +73,7 @@ data class SignalSample(
     val t: Double,                 // 주행 시작 기준 초
     val odoM: Double,              // 차속 적분 누적거리
     val speedKph: Double,
-    val steeringDeg: Double?,      // null = 값 없음. steeringSign 적용 후: 오른쪽 양수
+    val steeringDeg: Double?,      // null = 값 없음. 분류기가 steeringSign을 곱해 오른쪽을 양수로 맞춤
     val turnSignal: TurnSignal?,   // OFF, LEFT, RIGHT
     val brakeOn: Boolean?,
     val gear: Gear,                // P, R, N, D
