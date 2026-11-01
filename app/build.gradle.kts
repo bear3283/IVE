@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     kotlin("android")
+    kotlin("plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
@@ -55,4 +56,9 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // 시나리오 JSON. org.json과 달리 JVM 단위 테스트에서 실제 시나리오를 읽을 수 있다.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    testImplementation(kotlin("test"))
+    testImplementation("junit:junit:4.13.2")
 }

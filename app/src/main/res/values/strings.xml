@@ -1,4 +1,19 @@
 <resources>
     <string name="app_name">DriveScore</string>
     <string name="home_tagline">오늘의 주행을 하이라이트로 돌려봐요</string>
+    <string name="recording_channel">주행 기록</string>
+    <string name="recording_notice">주행을 기록하고 있어요</string>
+    <string name="session_state">상태: %1$s</string>
+    <string name="source_title">신호 소스</string>
+    <string name="source_live">실차</string>
+    <string name="source_replay">재생</string>
+    <string name="source_hybrid">하이브리드</string>
+    <string name="scenario_demo">시연 2분</string>
+    <string name="scenario_commute">출근 코스</string>
+    <string name="demo_seed">시연 프로필: 숙련 기준</string>
+    <string name="restart">다시 시작</string>
+    <string name="limits_notice">신호 준수, 보행자 보호, 차간 거리는 평가하지 않아요. 기록은 이 기기에만 저장돼요.</string>
+    <string name="trips_title">주행 기록</string>
+    <string name="trip_line">#%1$d  %2$d점  %3$s  %4$.1fkm</string>
+    <string name="log_title">이벤트 로그</string>
 </resources>
