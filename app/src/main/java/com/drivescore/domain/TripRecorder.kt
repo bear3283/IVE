@@ -196,7 +196,7 @@ class TripRecorder @Inject constructor(
             total = result.total,
             difficulty = result.difficulty,
             grade = grade.name,
-            itemsJson = encodeItems(result.items),
+            itemsJson = TripCodec.encodeItems(result.items),
         )
         return dao.saveTrip(
             trip,
@@ -245,18 +245,6 @@ class TripRecorder @Inject constructor(
         tripId = tripId, category = category.name, reason = reason.name, t = t, odoM = odoM, severity = severity,
         observedJson = JsonObject(observed.mapValues { JsonPrimitive(it.value) }).toString(), lat = lat, lng = lng,
     )
-
-    private fun encodeItems(items: List<ItemScore>) = buildJsonArray {
-        items.forEach {
-            add(buildJsonObject {
-                put("category", it.category.name)
-                put("maxPoints", it.maxPoints)
-                put("points", it.points)
-                put("stars", it.stars)
-                put("notApplicable", it.notApplicable)
-            })
-        }
-    }.toString()
 
     private companion object {
         const val TICK_MS = 100L

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -13,31 +14,43 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.drivescore.R
 import com.drivescore.data.db.DriveDao
 import com.drivescore.data.db.Trip
 import com.drivescore.data.signal.SourceMode
+import com.drivescore.domain.DriveGate
 import com.drivescore.domain.RecorderSettings
+import com.drivescore.domain.Session
+import com.drivescore.domain.TripDetails
 import com.drivescore.domain.TripRecorder
-import com.drivescore.scoring.Gear
+import com.drivescore.domain.loadTripDetails
 import com.drivescore.service.RecordingService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private sealed interface Screen {
+    data object Home : Screen
+    data class Replay(val tripId: Long) : Screen
+    data class Result(val tripId: Long) : Screen
+}
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var recorder: TripRecorder
     @Inject lateinit var settings: RecorderSettings
     @Inject lateinit var dao: DriveDao
+    @Inject lateinit var gate: DriveGate
+
+    private val screenState = mutableStateOf<Screen>(Screen.Home)
+    private var arrivedTripId: Long? = null
 
     private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         startRecording()
@@ -52,11 +65,59 @@ class MainActivity : ComponentActivity() {
         permissions.launch(needed.toTypedArray())
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                val gear by recorder.gear.collectAsStateWithLifecycle()
-                // 기어를 모르거나 P가 아니면 내용을 보여주지 않는다.
-                if (gear == Gear.P || (gear == null && settings.mode == SourceMode.REPLAY)) Home() else DrivingCover()
+                val gateState by gate.state.collectAsStateWithLifecycle()
+                LaunchedEffect(gateState.needsCover) {
+                    if (gateState.needsCover) {
+                        startActivity(Intent(this@MainActivity, DrivingCoverActivity::class.java))
+                        @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+                    }
+                }
+                // 주행 중에는 화면을 구성에서 빼서 리플레이와 애니메이션을 즉시 멈춘다.
+                if (gateState.canShowContent) Content() else RecordingCover()
             }
         }
+    }
+
+    @Composable
+    private fun Content() {
+        val session by recorder.session.collectAsStateWithLifecycle()
+        val lastTripId by recorder.lastTripId.collectAsStateWithLifecycle()
+        var screen by screenState
+
+        LaunchedEffect(session, lastTripId) {
+            val id = lastTripId
+            if (session == Session.ARRIVED && id != null && id != arrivedTripId) {
+                arrivedTripId = id
+                screen = Screen.Replay(id)
+            }
+        }
+        val close = {
+            recorder.dismissResult()
+            screen = Screen.Home
+        }
+        BackHandler(screen != Screen.Home, close)
+
+        when (val s = screen) {
+            Screen.Home -> Home { screen = Screen.Result(it) }
+            is Screen.Replay -> WithDetails(s.tripId, close) { d ->
+                // 궤적이 없으면 볼 것이 없으니 결과로 넘어간다.
+                if (d.track.size < 2 || d.trip.durationSec <= 0) LaunchedEffect(Unit) { screen = Screen.Result(s.tripId) }
+                else ReplayScreen(d) { screen = Screen.Result(s.tripId) }
+            }
+            is Screen.Result -> WithDetails(s.tripId, close) { d ->
+                ResultScreen(d, onReplay = { screen = Screen.Replay(s.tripId) }, onClose = close)
+            }
+        }
+    }
+
+    @Composable
+    private fun WithDetails(tripId: Long, onMissing: () -> Unit, content: @Composable (TripDetails) -> Unit) {
+        var details by remember(tripId) { mutableStateOf<TripDetails?>(null) }
+        LaunchedEffect(tripId) {
+            details = dao.loadTripDetails(tripId)
+            if (details == null) onMissing()
+        }
+        Box(Modifier.fillMaxSize().background(Palette.Background)) { details?.let { content(it) } }
     }
 
     private fun startRecording() {
@@ -64,14 +125,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun DrivingCover() {
-        Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.recording_notice), color = Color.Gray, style = MaterialTheme.typography.headlineMedium)
-        }
-    }
-
-    @Composable
-    private fun Home() {
+    private fun Home(onOpenTrip: (Long) -> Unit) {
         val session by recorder.session.collectAsStateWithLifecycle()
         val log by recorder.log.collectAsStateWithLifecycle()
         val profileId by recorder.profileId.collectAsStateWithLifecycle()
@@ -109,7 +163,9 @@ class MainActivity : ComponentActivity() {
                 LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     item { Text(stringResource(R.string.trips_title), style = MaterialTheme.typography.titleLarge) }
                     items(trips, key = Trip::id) { t ->
-                        Text(stringResource(R.string.trip_line, t.id, t.total, t.grade, t.distanceM / 1000), style = MaterialTheme.typography.titleMedium)
+                        TextButton({ onOpenTrip(t.id) }, Modifier.fillMaxWidth().heightIn(min = 76.dp)) {
+                            Text(stringResource(R.string.trip_line, t.id, t.total, stringResource(gradeLabel(t.grade)), t.distanceM / 1000), fontSize = 26.sp, modifier = Modifier.fillMaxWidth())
+                        }
                     }
                     item { Text(stringResource(R.string.log_title), style = MaterialTheme.typography.titleLarge) }
                     items(log.reversed()) { Text(it, style = MaterialTheme.typography.bodyLarge) }

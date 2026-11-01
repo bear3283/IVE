@@ -23,6 +23,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- 주행 중 유일하게 보이는 화면. 정적인 검은 화면과 한 줄 안내뿐이다. -->
+        <activity
+            android:name=".ui.DrivingCoverActivity"
+            android:exported="false"
+            android:launchMode="singleTop">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <service
             android:name=".service.RecordingService"
             android:exported="false"
