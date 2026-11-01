@@ -35,15 +35,16 @@
 
 ## M2. 신호 소스와 주행 기록 (11/5~11/8)
 
-- [ ] `VehicleSignalSource` 인터페이스 (Flow)
-- [ ] `ReplaySignalSource` + `ReplayNaviSource`: `assets/scenarios/*.json` 재생 (형식: `docs/REPLAY_FORMAT.md`)
-- [ ] 시연용 시나리오 2개: `commute.json`(출근, 약 10분 압축), `demo_short.json`(2분, 시연 영상용)
-- [ ] `PleosVehicleSignalSource`(조향·깜빡이·브레이크), `CarPropertySignalSource`(차속·기어)
-- [ ] `HybridSignalSource`: 차속·위치·내비는 Replay, 나머지는 실시간(Virtual Console)
-- [ ] 설정 화면에 소스 선택: 실차 / 재생 / 하이브리드
-- [ ] `TripRecorder`(F-03) + 세션 상태머신 + Room 저장
+- [x] `VehicleSignalSource` 인터페이스 (Flow)
+- [x] `ReplaySignalSource` + `ReplayNaviSource`: `assets/scenarios/*.json` 재생 (형식: `docs/REPLAY_FORMAT.md`)
+- [x] 시연용 시나리오 2개: `commute.json`(출근, 약 10분 압축), `demo_short.json`(2분, 시연 영상용)
+- [x] `PleosVehicleSignalSource`(조향·깜빡이·브레이크), `CarPropertySignalSource`(차속·기어)
+- [x] `HybridSignalSource`: 차속·위치·내비는 Replay, 나머지는 실시간(Virtual Console)
+- [x] 설정 화면에 소스 선택: 실차 / 재생 / 하이브리드
+- [x] `TripRecorder`(F-03) + 세션 상태머신 + Room 저장
 
 완료 기준: 에뮬레이터에서 하이브리드 모드로 Virtual Console 깜빡이·조향을 바꾸면 이벤트 로그에 기록되고, P 진입 시 Trip이 저장된다.
+(현황: 단위 테스트와 빌드만 통과. 에뮬레이터 검증 전)
 
 ## M3. 도착 후 화면 (11/8~11/12) ← 시연 영상의 핵심
 
