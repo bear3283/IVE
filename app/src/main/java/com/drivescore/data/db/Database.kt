@@ -31,10 +31,13 @@ data class Trip(
     val durationSec: Double,
     val distanceM: Double,
     val total: Int,
-    val difficulty: Double,
     val grade: String,
     /** "이번엔 기록하지 마". 등급 계산에서 뺀다. */
     val excluded: Boolean = false,
+    /** 표본이 부족한 주행. excluded와 함께 켜져 기록과 등급에서 빠진다. */
+    val lowSample: Boolean = false,
+    /** 등급 과제 달성 여부. */
+    val challengePassed: Boolean = false,
     /** ItemScore 목록 JSON. */
     val itemsJson: String,
 )
@@ -47,7 +50,7 @@ data class TripEvent(
     val reason: String,
     val t: Double,
     val odoM: Double,
-    val severity: Double,
+    val deduction: Double,
     val observedJson: String,
     val lat: Double?,
     val lng: Double?,
@@ -103,7 +106,7 @@ interface DriveDao {
     }
 }
 
-@Database(entities = [DriverProfile::class, Course::class, Trip::class, TripEvent::class, TrackPoint::class], version = 1, exportSchema = false)
+@Database(entities = [DriverProfile::class, Course::class, Trip::class, TripEvent::class, TrackPoint::class], version = 2, exportSchema = false)
 abstract class DriveDatabase : RoomDatabase() {
     abstract fun dao(): DriveDao
 }

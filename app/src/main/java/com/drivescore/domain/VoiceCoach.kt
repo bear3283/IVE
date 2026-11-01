@@ -78,17 +78,14 @@ class VoiceCoach @Inject constructor(
     }
 
     private suspend fun loadBriefing(route: RouteInfo): Briefing {
-        val c = ScoringConfig()
         val turns = route.markers.count { it.type in TURN_TYPES }
         val cameras = route.markers.count { it.type == MarkerType.SPEED_CAMERA || it.type == MarkerType.SECTION_START }
-        val bonus = (c.difficultyPerTurn * turns + c.difficultyPerCamera * cameras).coerceAtMost(c.difficultyMaxBonus)
-        val stars = 1 + (bonus / c.difficultyMaxBonus * 4).toInt()
         val profile = recorder.profileId.value
         val course = recorder.findCourseId()
         val last = if (profile != null && course != null) dao.previousTrip(profile, Long.MAX_VALUE, course) else null
-        val penalty = last?.let { t -> dao.events(t.id).map(TripCodec::toPenalty).maxByOrNull { it.severity } }
+        val penalty = last?.let { t -> dao.events(t.id).map(TripCodec::toPenalty).maxByOrNull { it.deduction } }
         return Briefing(
-            route.destination.name, route.markers, turns, cameras, stars, course != null,
+            route.destination.name, route.markers, turns, cameras, course != null,
             last?.total, course?.let { dao.bestTotal(it) }, penalty,
         )
     }

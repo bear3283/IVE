@@ -39,14 +39,14 @@ class VoiceLinesTest {
     }
 
     @Test fun `브리핑은 단골 코스면 지난 감점으로 미션을 고른다`() {
-        val b = Briefing("회사", emptyList(), 1, 1, 1, true, 70, 80, p(1.0, PenaltyReason.SIGNAL_MISSING, Category.LANE_CHANGE))
+        val b = Briefing("회사", emptyList(), 1, 1, true, 70, 80, p(1.0, PenaltyReason.SIGNAL_MISSING, Category.SIGNAL))
         val text = lines.briefing(b)
         assertTrue(text.startsWith("${R.string.voice_brief_known}(회사, 70, 80)"))
-        assertTrue(text.contains("${R.string.mission_lane}"))
+        assertTrue(text.contains("${R.string.mission_signal}"))
     }
 
     @Test fun `브리핑은 새 코스면 회전과 카메라 수를 말한다`() {
-        assertEquals("${R.string.voice_brief_new}(2, 3)", lines.briefing(Briefing("회사", emptyList(), 2, 3, 1, false, null, null, null)))
+        assertEquals("${R.string.voice_brief_new}(2, 3)", lines.briefing(Briefing("회사", emptyList(), 2, 3, false, null, null, null)))
     }
 
     @Test fun `주행 중에는 예고만 나가고 정차 중에는 예고가 나가지 않는다`() {

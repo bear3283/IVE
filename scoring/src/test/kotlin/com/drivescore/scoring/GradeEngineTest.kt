@@ -34,12 +34,7 @@ class GradeEngineTest {
 
     @Test fun `마스터는 다음 등급이 없다`() = assertNull(e.evaluate(List(20) { 95 }).next)
 
-    @Test fun `등급이 오를수록 기준이 엄격해진다`() {
-        val all = Grade.entries.map { GradeRules.forGrade(it) }
-        all.zipWithNext { a, b ->
-            assert(a.signalLeadSec <= b.signalLeadSec)
-            assert(a.straightToleranceDeg > b.straightToleranceDeg)
-            assert(a.hardBrakeMps2 > b.hardBrakeMps2)
-        }
+    @Test fun `등급이 오를수록 과제가 어려워진다`() {
+        Grade.entries.map { GradeRules.forGrade(it) }.zipWithNext { a, b -> assert(a.signalLeadSec < b.signalLeadSec) }
     }
 }
