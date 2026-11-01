@@ -124,7 +124,10 @@ class MainActivity : ComponentActivity() {
 
         when (val s = screen) {
             Screen.Home -> Home(
-                onOpenTrip = { screen = Screen.Result(it) },
+                onOpenTrip = {
+                    coach.leaveResult()
+                    screen = Screen.Result(it)
+                },
                 onSettings = { screen = Screen.Settings },
             )
             Screen.Settings -> Settings()
