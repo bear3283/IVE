@@ -1,4 +1,6 @@
-# DriveScore (가칭)
+# IVECORE
+
+드라이브의 "이브"와 스코어의 "코어"를 합친 이름이다. 팀: Bear (개인)
 
 운전을 마치고 시동을 끄기 전, 오늘의 주행을 하이라이트로 돌려보는 차량 전용 안전운전 게임 앱.
 현대자동차그룹 차량용 앱 개발 공모전(Pleos App Market) 출품작.
@@ -19,7 +21,7 @@ Pleos Connect Emulator v2.1.0 (API 34, Automotive, Cold boot, RAM 4GB), 2560×14
 
 ## APK 위치
 
-`apk/` 폴더. 1차 제출 시 추가한다.
+`apk/Bear_IVECORE_release.apk`. 1차 제출 시 추가한다.
 
 ## 문서
 

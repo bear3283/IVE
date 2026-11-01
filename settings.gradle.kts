@@ -9,6 +9,6 @@ dependencyResolutionManagement {
         maven { url = uri("https://nexus-playground.pleos.ai/repository/maven-releases/") }
     }
 }
-rootProject.name = "DriveScore"
+rootProject.name = "IVECORE"
 include(":scoring")
 include(":app")

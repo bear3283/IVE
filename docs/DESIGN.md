@@ -1,4 +1,4 @@
-# DriveScore 설계
+# IVECORE 설계
 
 상태: 초안, 2026-11-01. 기능 기준은 `SPEC.md`, 일정은 `TASKS.md`, SDK 근거는 `pleos-sdk-setup.md`.
 수치는 모두 초기값이며 실측 전이다. 구현 코드는 포함하지 않는다.
