@@ -7,9 +7,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,31 +27,27 @@ import com.drivescore.scoring.MarkerType
 /** F-02. 좌표가 없는 내비 안내(거리만 제공)에 맞춰 경로를 한 줄로 그린다. */
 @Composable
 fun BriefingPanel(briefing: Briefing?, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(36.dp)) {
         if (briefing == null) {
-            Text(stringResource(R.string.brief_no_route), color = Palette.Muted, fontSize = 30.sp)
+            Text(stringResource(R.string.brief_no_route), color = Palette.Muted, fontSize = 44.sp, lineHeight = 60.sp)
             return@Column
         }
-        Text(stringResource(R.string.brief_destination, briefing.destination), color = Palette.Text, fontSize = 40.sp, fontWeight = FontWeight.Bold)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            Text(stringResource(R.string.brief_counts, briefing.turns, briefing.cameras), color = Palette.Text, fontSize = 28.sp)
-            Text(stringResource(R.string.brief_difficulty) + " " + "★".repeat(briefing.difficultyStars), color = Palette.Signal, fontSize = 28.sp)
+        Text(stringResource(R.string.brief_destination, briefing.destination), color = Palette.Text, fontSize = 72.sp, fontWeight = FontWeight.Bold)
+        RouteStrip(briefing, Modifier.fillMaxWidth().height(90.dp))
+        // 개수가 곧 범례다. 색과 뜻을 따로 외우지 않아도 된다.
+        Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+            Legend(Palette.Good, stringResource(R.string.brief_turns, briefing.turns))
+            Legend(Palette.Signal, stringResource(R.string.brief_cameras, briefing.cameras))
         }
-        RouteStrip(briefing, Modifier.fillMaxWidth().height(70.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            Legend(Palette.Good, R.string.brief_legend_turn)
-            Legend(Palette.Signal, R.string.brief_legend_camera)
-            Legend(Palette.Text, R.string.brief_legend_dest)
-            if (briefing.lastPenalty != null) Legend(Palette.Bad, R.string.brief_legend_penalty)
-        }
+        Spacer(Modifier.weight(1f))
         if (briefing.lastTotal != null) {
-            Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(64.dp)) {
                 Stat(R.string.brief_last, briefing.lastTotal)
                 briefing.bestTotal?.let { Stat(R.string.brief_best, it) }
             }
-            briefing.lastPenalty?.let { Text(stringResource(R.string.brief_last_penalty, it.describe()), color = Palette.Bad, fontSize = 26.sp) }
+            briefing.lastPenalty?.let { Legend(Palette.Bad, stringResource(R.string.brief_last_penalty, it.describe())) }
         } else {
-            Text(stringResource(R.string.brief_new_course), color = Palette.Muted, fontSize = 28.sp)
+            Text(stringResource(R.string.brief_new_course), color = Palette.Muted, fontSize = 34.sp)
         }
     }
 }
@@ -94,34 +87,29 @@ private fun RouteStrip(b: Briefing, modifier: Modifier) {
 }
 
 @Composable
-private fun Legend(color: Color, label: Int) = Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-    Box(Modifier.size(20.dp).background(color, CircleShape))
-    Text(stringResource(label), color = Palette.Muted, fontSize = 24.sp)
+private fun Legend(color: Color, label: String) = Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    Box(Modifier.size(24.dp).background(color, CircleShape))
+    Text(label, color = Palette.Text, fontSize = 34.sp)
 }
 
 @Composable
 private fun Stat(label: Int, value: Int) = Column {
-    Text(stringResource(label), color = Palette.Muted, fontSize = 24.sp)
-    Text("$value" + stringResource(R.string.points_unit), color = Palette.Text, fontSize = 44.sp, fontWeight = FontWeight.Bold)
+    Text(stringResource(label), color = Palette.Muted, fontSize = 30.sp)
+    Text("$value" + stringResource(R.string.points_unit), color = Palette.Text, fontSize = 64.sp, fontWeight = FontWeight.Bold)
 }
 
-/** 정차 중 마이크 버튼과 마지막 안내 문장. */
+/** 정차 중 마이크 버튼과 마지막 안내 문장. 마이크는 항상 왼쪽 아래, 운전석 가까이에 둔다. */
 @Composable
 fun VoiceBar(listening: Boolean, caption: String?, hint: String, onMic: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier.background(Palette.Panel, RoundedCornerShape(20.dp)).padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TouchGap)) {
         MicButton(listening, onMic)
-        Text(caption ?: hint, color = if (caption != null) Palette.Text else Palette.Muted, fontSize = 26.sp, modifier = Modifier.weight(1f))
+        Text(caption ?: hint, color = if (caption != null) Palette.Text else Palette.Muted, fontSize = 30.sp, modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
-fun MicButton(listening: Boolean, onMic: () -> Unit) {
-    Button(
-        onMic, Modifier.heightIn(min = 80.dp).widthIn(min = 180.dp),
-        colors = if (listening) ButtonDefaults.buttonColors(containerColor = Palette.Bad) else ButtonDefaults.buttonColors(),
-    ) { Text(stringResource(if (listening) R.string.action_listening else R.string.action_mic), fontSize = 26.sp) }
-}
+fun MicButton(listening: Boolean, onMic: () -> Unit) = CarButton(
+    stringResource(if (listening) R.string.action_listening else R.string.action_mic),
+    onMic,
+    style = if (listening) CarButtonStyle.ACTIVE else CarButtonStyle.SECONDARY,
+)
