@@ -12,7 +12,6 @@
 - [x] `.gitignore`, README(앱 이름, 한 줄 소개, 실행 방법, 테스트 환경, APK 위치 — 공모전 필수 항목)
 
 완료 기준: `./gradlew :scoring:test`와 `./gradlew :app:assembleDebug`가 성공한다.
-(현황: `:scoring:test` 통과. `:app:assembleDebug`는 Android SDK 설치 후 검증 필요)
 
 ## M1. 채점 엔진 `:scoring` (11/2~11/5) ← 가장 중요, 테스트 우선
 
