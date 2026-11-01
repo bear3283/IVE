@@ -7,6 +7,7 @@
 - 전체 기능 명세: `docs/SPEC.md`
 - 작업 순서와 완료 기준: `docs/TASKS.md`
 - 시연용 주행 시나리오 형식: `docs/REPLAY_FORMAT.md`
+- 설계와 결정 사항: `docs/DESIGN.md` (SPEC과 다르면 DESIGN 1절이 우선)
 
 ## 마감
 
@@ -20,7 +21,7 @@
 - `minSdk 28` 필수(차량 보안 요구사항), `compileSdk/targetSdk 34`, Gradle 8.0+.
 - 에뮬레이터: Pleos Connect Emulator v2.1.0 (API 34 이미지, Automotive 폼팩터, **Cold boot**, RAM 4GB).
 - **차량 하드웨어 직접 접근 금지.** 차량 데이터는 Pleos Connect SDK 또는 AAOS 표준 Car API로만 받는다.
-- 표준 데이터(차속, 기어 등)는 **AAOS `CarPropertyManager`** 로 받는다. Pleos Vehicle SDK의 `VehicleSpeedListener`는 v2.3.1에서 삭제됨.
+- 차속은 **AAOS `CarPropertyManager`** 로, 기어는 Vehicle SDK `Gear`로 받는다. Pleos Vehicle SDK의 `VehicleSpeedListener`는 삭제됨. SDK 상세: `docs/pleos-sdk-setup.md`
 - **주행 중 UI 금지:** `CarUxRestrictions`를 따른다. 주행 중(D단)에는 점수·미션·애니메이션을 띄우지 않는다. 리플레이는 P단에서만, D단 전환 시 즉시 정지.
 - 음성은 내비 안내보다 후순위. 오디오 포커스(`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`)를 요청하고 실패하면 대기.
 - 네트워크 없이 기록·채점이 모두 기기에서 끝나야 한다.
@@ -30,7 +31,7 @@
 
 | SDK | 상태 | 비고 |
 |---|---|---|
-| Vehicle SDK (상태 조회) v2.3.1 | 사용 가능 | 도메인별 `checkXXXCapabilities`로 지원 여부 확인 |
+| Vehicle SDK (상태 조회) v2.3.2 (저장소 기준, 문서의 2.3.1은 없음) | 사용 가능 | 도메인별 `checkXXXCapabilities`로 지원 여부 확인 |
 | NaviHelper v3.0.5 | 사용 가능 | 좌표 생성자 순서 (latitude, longitude) 로 바뀜 |
 | TextToSpeech / SpeechToText v3.3.1 | **전제로 사용** | Client ID/Secret 필요. 막히면 Android 기본 TTS·SpeechRecognizer로 대체 |
 | FusedLocation v1.1.2 | 준비 중 | 그 전까지 NaviHelper 현재 위치 정보로 대체 |
@@ -71,6 +72,7 @@ Virtual Console에는 차속·위치 조작 카드가 없으므로, 시연은 Re
 
 ```bash
 ./gradlew :scoring:test            # 채점 로직 단위 테스트 (가장 자주 실행)
+./gradlew :app:testDebugUnitTest   # 시나리오·세션·기록 형식 단위 테스트
 ./gradlew :app:assembleDebug
 ./gradlew :app:installDebug        # 실행 중인 Pleos 에뮬레이터에 설치
 ./gradlew :app:assembleRelease     # 제출용 APK
@@ -78,10 +80,8 @@ Virtual Console에는 차속·위치 조작 카드가 없으므로, 시연은 Re
 
 ## 모르는 것 (추측하지 말고 확인하거나 사용자에게 물을 것)
 
-- Pleos SDK의 Gradle 저장소 주소와 의존성 좌표. Pleos Playground 문서/샘플 프로젝트에서 확인한다. 확인 전에는 어댑터를 `TODO`로 두고 Replay 구현으로 진행한다.
-- Vehicle SDK의 정확한 메서드명·리스너 시그니처(예: `getCurrentSteeringWheelAngle`, TurnSignal/Brake 리스너). 공식 API 레퍼런스로 확인.
-- NaviHelper가 주는 경로 좌표선 상세도, `CautionPointType`에 커브가 포함되는지, 일반 도로 제한속도 제공 여부.
-- 필요한 권한 목록. 승인되지 않은 권한 선언은 앱 마켓 심사 탈락 사유이므로 쓰는 것만 선언한다.
+- `docs/pleos-sdk-setup.md`의 [미확인] 항목(조향 단위·부호, 콜백 주기, 내비 콜백 동작 등). 에뮬레이터에서 실측한다.
+- 필요한 권한의 심사 통과 여부. 승인되지 않은 권한 선언은 앱 마켓 심사 탈락 사유이므로 쓰는 것만 선언한다.
 
 ## 참고 문서
 
