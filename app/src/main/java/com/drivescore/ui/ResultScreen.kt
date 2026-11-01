@@ -74,16 +74,7 @@ fun ResultScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(stringResource(R.string.items_title), color = Palette.Muted, fontSize = 24.sp)
-            details.items.forEach { item ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(item.category.label()), color = Palette.Text, fontSize = 30.sp, modifier = Modifier.weight(1f))
-                    if (item.notApplicable) {
-                        Text(stringResource(R.string.not_applicable), color = Palette.Muted, fontSize = 26.sp)
-                    } else {
-                        Text("★".repeat(item.stars) + "☆".repeat((5 - item.stars).coerceAtLeast(0)), color = Palette.Signal, fontSize = 34.sp)
-                    }
-                }
-            }
+            RadarChart(details.items, details.previousItems, Modifier.fillMaxWidth().height(430.dp))
             Divider(color = Palette.Line, modifier = Modifier.padding(vertical = 8.dp))
             Text(stringResource(R.string.penalties_title), color = Palette.Muted, fontSize = 24.sp)
             if (details.penalties.isEmpty()) Text(stringResource(R.string.no_penalty), color = Palette.Good, fontSize = 28.sp)

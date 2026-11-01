@@ -48,16 +48,19 @@ data class TripDetails(
     val track: List<TrackPoint>,
     val previousTotal: Int?,
     val badges: List<Badge>,
+    val previousItems: List<ItemScore> = emptyList(),
 )
 
 suspend fun DriveDao.loadTripDetails(id: Long): TripDetails? {
     val trip = trip(id) ?: return null
     val items = TripCodec.decodeItems(trip.itemsJson)
     val penalties = events(id).map(TripCodec::toPenalty).sortedBy { it.t }
+    val previous = previousTrip(trip.profileId, trip.startedAtMs, trip.courseId)
     return TripDetails(
         trip, items, penalties, track(id),
-        previousTrip(trip.profileId, trip.startedAtMs, trip.courseId)?.total,
+        previous?.total,
         BadgeRules.award(trip.total, items, penalties, trip.distanceM, totalsBefore(trip.profileId, trip.startedAtMs)),
+        previous?.let { TripCodec.decodeItems(it.itemsJson) }.orEmpty(),
     )
 }
 

@@ -8,13 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.stringResource
@@ -27,10 +24,7 @@ import com.drivescore.domain.ReplayGeometry
 import com.drivescore.domain.TripDetails
 import com.drivescore.scoring.ReplayTimeline
 import com.drivescore.scoring.activePenalty
-import kotlin.math.abs
-import kotlin.math.atan2
 import kotlin.math.max
-import kotlin.math.min
 
 private const val PENALTY_COLOR_SEC = 3.0
 private const val CHART_BEFORE_SEC = 10.0
@@ -82,7 +76,7 @@ fun ReplayScreen(
 
     Column(Modifier.fillMaxSize().background(Palette.Background).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            TrackCanvas(details, times, t, Modifier.weight(1.5f).fillMaxHeight().background(Palette.Panel, RoundedCornerShape(20.dp)))
+            Track3D(details, times, t, play, Modifier.weight(1.5f).fillMaxHeight().background(Palette.Panel, RoundedCornerShape(20.dp)))
             Overlay(track, times, t, point, Modifier.weight(1f).fillMaxHeight().background(Palette.Panel, RoundedCornerShape(20.dp)).padding(20.dp))
         }
         Text(
@@ -107,58 +101,6 @@ fun ReplayScreen(
             OutlinedButton(onFinished, Modifier.heightIn(min = 80.dp)) { Text(stringResource(R.string.action_result), fontSize = 26.sp) }
         }
     }
-}
-
-@Composable
-private fun TrackCanvas(details: TripDetails, times: DoubleArray, t: Double, modifier: Modifier) {
-    val track = details.track
-    val pts = remember(track) { ReplayGeometry.project(track) }
-    val current by rememberUpdatedState(t)
-    Box(modifier.padding(24.dp).drawWithCache {
-        // 궤적은 크기가 바뀔 때만 계산한다.
-        val minX = pts.minOfOrNull { it.x } ?: 0.0
-        val maxX = pts.maxOfOrNull { it.x } ?: 1.0
-        val minY = pts.minOfOrNull { it.y } ?: 0.0
-        val maxY = pts.maxOfOrNull { it.y } ?: 1.0
-        val scale = min(size.width / max(maxX - minX, 1.0), size.height / max(maxY - minY, 1.0)).toFloat()
-        val ox = (size.width - (maxX - minX).toFloat() * scale) / 2
-        val oy = (size.height - (maxY - minY).toFloat() * scale) / 2
-        fun at(i: Int) = Offset(ox + (pts[i].x - minX).toFloat() * scale, size.height - oy - (pts[i].y - minY).toFloat() * scale)
-        val bad = BooleanArray(pts.size) { i -> details.penalties.any { abs(it.t - track[i].t) <= PENALTY_COLOR_SEC } }
-        fun pathOf(wanted: Boolean) = Path().apply {
-            var open = false
-            for (i in 1 until pts.size) {
-                if (bad[i] == wanted) {
-                    if (!open) at(i - 1).let { moveTo(it.x, it.y) }
-                    at(i).let { lineTo(it.x, it.y) }
-                    open = true
-                } else open = false
-            }
-        }
-        val normal = pathOf(false)
-        val penalty = pathOf(true)
-        val pins = details.penalties.map { it.t to at(ReplayGeometry.indexAt(times, it.t).coerceAtMost(pts.lastIndex)) }
-        val stroke = Stroke(10f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        onDrawBehind {
-            if (pts.isEmpty()) return@onDrawBehind
-            drawPath(normal, Palette.Good, style = stroke)
-            drawPath(penalty, Palette.Bad, style = stroke)
-            pins.forEach { (pt, o) ->
-                drawCircle(Palette.Bad, if (abs(pt - current) <= PENALTY_COLOR_SEC) 22f else 13f, o)
-                drawCircle(Palette.Panel, 5f, o)
-            }
-            val i = ReplayGeometry.indexAt(times, current).coerceAtMost(pts.lastIndex)
-            val car = at(i)
-            val ahead = at(min(i + 1, pts.lastIndex))
-            val behind = at(max(i - 1, 0))
-            val angle = Math.toDegrees(atan2((ahead.x - behind.x).toDouble(), (behind.y - ahead.y).toDouble())).toFloat()
-            rotate(angle, car) {
-                drawPath(Path().apply {
-                    moveTo(car.x, car.y - 30f); lineTo(car.x + 19f, car.y + 20f); lineTo(car.x, car.y + 10f); lineTo(car.x - 19f, car.y + 20f); close()
-                }, Color.White)
-            }
-        }
-    }.fillMaxSize())
 }
 
 @Composable
