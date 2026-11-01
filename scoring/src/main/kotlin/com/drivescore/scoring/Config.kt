@@ -70,6 +70,8 @@ data class ScoringConfig(
     /** 급출발·급정지, 직선 안정성의 기회 수 = 주행 거리 / 이 값. */
     val kmPerOpportunity: Double = 2.0,
 
+    /** 이보다 짧은 주행은 평가할 것이 없어 저장하지 않는다(주차 중 기어 조작 등). */
+    val minTripDistanceM: Double = 100.0,
     /** 이 시간 안에 다시 기준을 넘으면 같은 급가속·급제동 한 건이다. */
     val hardEventMergeSec: Double = 3.0,
     val difficultyPerTurn: Double = 0.01,

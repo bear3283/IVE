@@ -205,12 +205,19 @@ class TripRecorder @Inject constructor(
                 } else if (session == Session.SCORING) {
                     writer?.close()
                     writer = null
-                    val id = scoreAndSave(samples.toList(), writtenMarkers, source.capabilities.value, startedAtMs, nav)
+                    val distance = samples.lastOrNull()?.odoM ?: 0.0
+                    if (distance >= ScoringConfig().minTripDistanceM) {
+                        val id = scoreAndSave(samples.toList(), writtenMarkers, source.capabilities.value, startedAtMs, nav)
+                        _lastTripId.value = id
+                        addLog("주행 저장: #$id")
+                        _session.value = SessionStateMachine.next(Session.SCORING, SessionEvent.ScoringDone)
+                    } else {
+                        addLog("짧은 주행 버림: ${distance.toInt()}m")
+                        skipNextTrip = false
+                        _session.value = Session.IDLE
+                    }
                     file?.delete()
                     file = null
-                    _lastTripId.value = id
-                    addLog("주행 저장: #$id")
-                    _session.value = SessionStateMachine.next(Session.SCORING, SessionEvent.ScoringDone)
                 }
             }
         } finally {
@@ -261,7 +268,7 @@ class TripRecorder @Inject constructor(
     private suspend fun recoverUnfinished() {
         tripsDir.listFiles { f -> f.name.endsWith(".samples") }?.forEach { f ->
             val decoded = RecordingCodec.decode(f.readLines())
-            if (decoded.samples.isNotEmpty()) {
+            if ((decoded.samples.lastOrNull()?.odoM ?: 0.0) >= ScoringConfig().minTripDistanceM) {
                 val startedAt = f.nameWithoutExtension.toLongOrNull() ?: f.lastModified()
                 val id = scoreAndSave(decoded.samples, decoded.markers, SignalCapabilities(), startedAt, null)
                 addLog("중단된 주행 복구: #$id")

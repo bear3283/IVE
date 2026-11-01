@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -13,15 +15,29 @@ android {
     useLibrary("android.car")
 
     defaultConfig {
-        applicationId = "com.drivescore"
+        applicationId = "com.bear.ivecore"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
     }
+    // 서명 키와 비밀번호는 저장소에 넣지 않는다. keystore.properties가 없으면 release는 서명 없이 빌드된다.
+    val keystoreFile = rootProject.file("keystore.properties")
+    signingConfigs {
+        if (keystoreFile.exists()) {
+            val p = Properties().apply { keystoreFile.inputStream().use(::load) }
+            create("release") {
+                storeFile = file(p.getProperty("storeFile"))
+                storePassword = p.getProperty("storePassword")
+                keyAlias = p.getProperty("keyAlias")
+                keyPassword = p.getProperty("keyPassword")
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {
