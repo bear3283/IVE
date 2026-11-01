@@ -66,7 +66,7 @@
 ## M5. 1차 제출 (11/14~11/15)
 
 - [ ] 시연 영상 흐름 리허설 (아래 9단계)
-- [ ] release 서명 APK 빌드 → `apk/팀명_앱이름_release.apk`
+- [ ] release 서명 APK 빌드 → `apk/Bear_IVECORE_release.apk`
 - [ ] README 최종 점검
 - [ ] (사용자) 화면 녹화, 기획서 작성, 이메일 제출
 
