@@ -15,14 +15,14 @@
 
 ## M1. 채점 엔진 `:scoring` (11/2~11/5) ← 가장 중요, 테스트 우선
 
-- [ ] 모델: `SignalSample(t, odoM, speedKph, steeringDeg, turnSignal, brakeOn, gear, lat, lng)`, `RouteMarker(id, type, odoM, speedLimitKph?)`, `DriveEvent`, `Penalty`
-- [ ] `ScoringConfig`, `GradeRules` (SPEC 3.2, 3.3의 값을 기본값으로)
-- [ ] `ManeuverClassifier`: 샘플 스트림 → 직선/커브/차선변경/회전/유턴 구간 (SPEC 3.1)
-- [ ] `TripScorer`: 구간 + 내비 지점 → 항목별 점수, 감점 목록(시각, 위치, 이유, 당시 값), 총점
-- [ ] 난이도 보정, 저속 악용 방지, 미지원 신호 배점 재분배
-- [ ] `GradeEngine`: 주행 기록 목록 → 현재 등급, 다음 등급 조건
-- [ ] `CourseMatcher`: 목적지 + 회전 지점 순서 유사도로 같은 코스 판정 (F-01)
-- [ ] `IntentMatcher`: STT 문장 → 의도 (SPEC 4)
+- [x] 모델: `SignalSample(t, odoM, speedKph, steeringDeg, turnSignal, brakeOn, gear, lat, lng)`, `RouteMarker(id, type, odoM, speedLimitKph?)`, `DriveEvent`, `Penalty`
+- [x] `ScoringConfig`, `GradeRules` (SPEC 3.2, 3.3의 값을 기본값으로)
+- [x] `ManeuverClassifier`: 샘플 스트림 → 직선/커브/차선변경/회전/유턴 구간 (SPEC 3.1)
+- [x] `TripScorer`: 구간 + 내비 지점 → 항목별 점수, 감점 목록(시각, 위치, 이유, 당시 값), 총점
+- [x] 난이도 보정, 저속 악용 방지, 미지원 신호 배점 재분배
+- [x] `GradeEngine`: 주행 기록 목록 → 현재 등급, 다음 등급 조건
+- [x] `CourseMatcher`: 목적지 + 회전 지점 순서 유사도로 같은 코스 판정 (F-01)
+- [x] `IntentMatcher`: STT 문장 → 의도 (SPEC 4)
 
 완료 기준 (단위 테스트로 증명):
 - 깜빡이 없이 30° 꺾었다 되돌림 → 차선변경 + "깜빡이 미사용" 감점
