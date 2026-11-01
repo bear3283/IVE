@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.stringResource
@@ -24,12 +23,10 @@ import com.drivescore.domain.ReplayGeometry
 import com.drivescore.domain.TripDetails
 import com.drivescore.scoring.ReplayTimeline
 import com.drivescore.scoring.activePenalty
-import kotlin.math.max
 
 private const val PENALTY_COLOR_SEC = 3.0
 private const val CHART_BEFORE_SEC = 10.0
 private const val CHART_AFTER_SEC = 2.0
-private const val CHART_MAX_KPH = 120f
 
 /** F-08. 호출자가 주행 중에는 이 화면을 구성에서 빼므로 재생은 그 즉시 멈춘다. */
 @Composable
@@ -74,75 +71,45 @@ fun ReplayScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().background(Palette.Background).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Track3D(details, times, t, play, Modifier.weight(1.5f).fillMaxHeight().background(Palette.Panel, RoundedCornerShape(20.dp)))
-            Overlay(track, times, t, point, Modifier.weight(1f).fillMaxHeight().background(Palette.Panel, RoundedCornerShape(20.dp)).padding(20.dp))
+    Column(Modifier.fillMaxSize().background(Palette.Background).padding(48.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+            Track3D(details, times, t, play, Modifier.weight(2.4f).fillMaxHeight().background(Palette.Panel, RoundedCornerShape(24.dp)))
+            Overlay(track, times, t, point, Modifier.weight(1f).fillMaxHeight())
         }
-        Text(
-            active?.describe() ?: stringResource(R.string.replay_normal),
-            color = if (active != null) Palette.Bad else Palette.Muted,
-            fontSize = 34.sp, fontWeight = FontWeight.Bold,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 감점이 없는 동안에도 자리를 비워 두어 화면이 출렁이지 않게 한다.
+        Text(active?.describe() ?: "", color = Palette.Bad, fontSize = 48.sp, fontWeight = FontWeight.Bold, modifier = Modifier.heightIn(min = 68.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TouchGap)) {
             val seek = { target: Double? -> if (target != null) play = timeline.playTimeOf((target - PENALTY_COLOR_SEC).coerceAtLeast(0.0)) }
-            OutlinedButton({ seek(details.penalties.lastOrNull { it.t < t - PENALTY_COLOR_SEC - 0.5 }?.t ?: 0.0) }, Modifier.heightIn(min = 80.dp)) {
-                Text(stringResource(R.string.action_prev), fontSize = 26.sp)
-            }
-            Button({ playing = !playing }, Modifier.heightIn(min = 80.dp).widthIn(min = 200.dp)) {
-                Text(stringResource(if (playing) R.string.action_pause else R.string.action_play), fontSize = 26.sp)
-            }
-            OutlinedButton({ seek(details.penalties.firstOrNull { it.t - PENALTY_COLOR_SEC > t + 0.5 }?.t) }, Modifier.heightIn(min = 80.dp)) {
-                Text(stringResource(R.string.action_next), fontSize = 26.sp)
-            }
-            Text(stringResource(R.string.replay_speed, timeline.speedAt(t)), color = Palette.Muted, fontSize = 26.sp, modifier = Modifier.padding(horizontal = 16.dp))
+            CarButton(stringResource(R.string.action_prev), { seek(details.penalties.lastOrNull { it.t < t - PENALTY_COLOR_SEC - 0.5 }?.t ?: 0.0) })
+            CarButton(stringResource(if (playing) R.string.action_pause else R.string.action_play), { playing = !playing }, Modifier.widthIn(min = 260.dp), CarButtonStyle.PRIMARY)
+            CarButton(stringResource(R.string.action_next), { seek(details.penalties.firstOrNull { it.t - PENALTY_COLOR_SEC > t + 0.5 }?.t) })
             Spacer(Modifier.weight(1f))
             MicButton(listening, onMic)
-            OutlinedButton(onFinished, Modifier.heightIn(min = 80.dp)) { Text(stringResource(R.string.action_result), fontSize = 26.sp) }
+            Spacer(Modifier.width(TouchGap))
+            CarButton(stringResource(R.string.action_result), onFinished)
         }
     }
 }
 
+/** 이 앱만 보여 줄 수 있는 차량 신호만 남긴다: 핸들, 속도, 깜빡이, 브레이크. */
 @Composable
 private fun Overlay(track: List<TrackPoint>, times: DoubleArray, t: Double, point: TrackPoint?, modifier: Modifier) {
-    val i = ReplayGeometry.indexAt(times, t)
-    val decel = run {
-        val a = track.getOrNull(i) ?: return@run 0.0
-        val b = track.getOrNull(i + 1) ?: return@run 0.0
-        ((a.speedKph - b.speedKph) / 3.6 / max(b.t - a.t, 0.05)).coerceAtLeast(0.0)
-    }
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            SteeringWheel(point?.steeringDeg ?: 0.0, Modifier.size(120.dp))
-            Column {
-                Label(R.string.overlay_steering)
-                Value(stringResource(R.string.value_deg, point?.steeringDeg ?: 0.0))
-            }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        SteeringWheel(point?.steeringDeg ?: 0.0, Modifier.size(260.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("${(point?.speedKph ?: 0.0).toInt()}", color = Palette.Text, fontSize = 96.sp, lineHeight = 100.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.unit_kph), color = Palette.Muted, fontSize = 30.sp, modifier = Modifier.padding(start = 10.dp, bottom = 16.dp))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-            Column {
-                Label(R.string.overlay_speed)
-                Value("${(point?.speedKph ?: 0.0).toInt()} ${stringResource(R.string.unit_kph)}")
-            }
-            Column {
-                Label(R.string.overlay_decel)
-                Value("%.1f ${stringResource(R.string.unit_mps2)}".format(decel), if (decel >= 3.5) Palette.Bad else Palette.Text)
-            }
+        Spacer(Modifier.weight(1f))
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.overlay_signal), color = Palette.Muted, fontSize = 28.sp)
+            Band(track, times, t, Palette.Signal) { it.turnSignal == "LEFT" || it.turnSignal == "RIGHT" }
+            Spacer(Modifier.height(12.dp))
+            Text(stringResource(R.string.overlay_brake), color = Palette.Muted, fontSize = 28.sp)
+            Band(track, times, t, Palette.Bad) { it.brakeOn == true }
         }
-        Chart(track, times, t, Modifier.fillMaxWidth().weight(1f)) { p, x, h ->
-            Offset(x, h - (p.speedKph.toFloat() / CHART_MAX_KPH).coerceIn(0f, 1f) * h)
-        }
-        Label(R.string.overlay_signal)
-        Band(track, times, t, Palette.Signal) { it.turnSignal == "LEFT" || it.turnSignal == "RIGHT" }
-        Label(R.string.overlay_brake)
-        Band(track, times, t, Palette.Bad) { it.brakeOn == true }
     }
 }
-
-@Composable private fun Label(id: Int) = Text(stringResource(id), color = Palette.Muted, fontSize = 22.sp)
-
-@Composable
-private fun Value(text: String, color: Color = Palette.Text) = Text(text, color = color, fontSize = 32.sp, fontWeight = FontWeight.Bold)
 
 @Composable
 private fun SteeringWheel(deg: Double, modifier: Modifier) = Canvas(modifier) {
@@ -156,27 +123,10 @@ private fun SteeringWheel(deg: Double, modifier: Modifier) = Canvas(modifier) {
     }
 }
 
-/** 현재 시점 앞뒤 구간의 선 그래프. */
-@Composable
-private fun Chart(track: List<TrackPoint>, times: DoubleArray, t: Double, modifier: Modifier, toPoint: (TrackPoint, Float, Float) -> Offset) = Canvas(modifier) {
-    val span = (CHART_BEFORE_SEC + CHART_AFTER_SEC).toFloat()
-    val path = Path()
-    var started = false
-    for (i in ReplayGeometry.indexAt(times, t - CHART_BEFORE_SEC)..ReplayGeometry.indexAt(times, t + CHART_AFTER_SEC)) {
-        val p = track.getOrNull(i) ?: continue
-        val o = toPoint(p, ((p.t - t + CHART_BEFORE_SEC).toFloat() / span).coerceIn(0f, 1f) * size.width, size.height)
-        if (started) path.lineTo(o.x, o.y) else path.moveTo(o.x, o.y)
-        started = true
-    }
-    drawPath(path, Palette.Good, style = Stroke(5f))
-    val now = (CHART_BEFORE_SEC.toFloat() / span) * size.width
-    drawLine(Palette.Muted, Offset(now, 0f), Offset(now, size.height), 2f)
-}
-
 /** 켜짐/꺼짐 띠. 공개 API의 브레이크가 ON/OFF뿐이라 값 대신 구간으로 보여준다(D1). */
 @Composable
 private fun Band(track: List<TrackPoint>, times: DoubleArray, t: Double, color: Color, on: (TrackPoint) -> Boolean) =
-    Canvas(Modifier.fillMaxWidth().height(22.dp)) {
+    Canvas(Modifier.fillMaxWidth().height(28.dp)) {
         val span = (CHART_BEFORE_SEC + CHART_AFTER_SEC).toFloat()
         drawRect(Palette.Line)
         val from = ReplayGeometry.indexAt(times, t - CHART_BEFORE_SEC)

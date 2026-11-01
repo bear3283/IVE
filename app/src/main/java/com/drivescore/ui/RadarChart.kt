@@ -22,13 +22,12 @@ import com.drivescore.scoring.Category
 import com.drivescore.scoring.ItemScore
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
 private const val RINGS = 4
 
-/** 항목별 평가 레이더. 축은 평가한 항목만, 별점은 축 이름 아래에 둔다. 점선은 지난번 주행. */
+/** 항목별 평가 레이더. 축은 평가한 항목만. 점선은 지난번 주행. */
 @Composable
 fun RadarChart(items: List<ItemScore>, previous: List<ItemScore>, modifier: Modifier = Modifier) {
     val axes = items.filterNot { it.notApplicable }
@@ -74,18 +73,13 @@ fun RadarChart(items: List<ItemScore>, previous: List<ItemScore>, modifier: Modi
         }
 
         for (i in 0 until n) {
-            val stars = "★".repeat(axes[i].stars) + "☆".repeat(max(5 - axes[i].stars, 0))
-            val title = measurer.measure(names[i], TextStyle(color = Palette.Text, fontSize = 24.sp))
-            val rating = measurer.measure(stars, TextStyle(color = Palette.Signal, fontSize = 20.sp))
-            val w = max(title.size.width, rating.size.width)
-            val h = title.size.height + rating.size.height
-            val p = at(i, 1.14f)
+            val title = measurer.measure(names[i], TextStyle(color = Palette.Text, fontSize = 30.sp))
+            val p = at(i, 1.12f)
             val cosA = cos(-PI / 2 + 2 * PI * i / n).toFloat()
             val sinA = sin(-PI / 2 + 2 * PI * i / n).toFloat()
-            val x = (p.x - w / 2f + cosA * w / 2f).coerceIn(0f, size.width - w)
-            val y = (p.y - h / 2f + sinA * h / 2f).coerceIn(0f, size.height - h)
-            drawText(title, topLeft = Offset(x + (w - title.size.width) / 2f, y))
-            drawText(rating, topLeft = Offset(x + (w - rating.size.width) / 2f, y + title.size.height))
+            val x = (p.x - title.size.width / 2f + cosA * title.size.width / 2f).coerceIn(0f, size.width - title.size.width)
+            val y = (p.y - title.size.height / 2f + sinA * title.size.height / 2f).coerceIn(0f, size.height - title.size.height)
+            drawText(title, topLeft = Offset(x, y))
         }
     }
 }
