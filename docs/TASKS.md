@@ -15,7 +15,7 @@
 
 ## M1. 채점 엔진 `:scoring` (11/2~11/5) ← 가장 중요, 테스트 우선
 
-- [ ] 모델: `SignalSample(t, steeringDeg, turnSignal, brakePct, speedKph, gear, lat, lng)`, `NaviPoint(type, lat, lng, distanceM, speedLimit?)`, `DriveEvent`, `Penalty`
+- [ ] 모델: `SignalSample(t, odoM, speedKph, steeringDeg, turnSignal, brakeOn, gear, lat, lng)`, `RouteMarker(id, type, odoM, speedLimitKph?)`, `DriveEvent`, `Penalty`
 - [ ] `ScoringConfig`, `GradeRules` (SPEC 3.2, 3.3의 값을 기본값으로)
 - [ ] `ManeuverClassifier`: 샘플 스트림 → 직선/커브/차선변경/회전/유턴 구간 (SPEC 3.1)
 - [ ] `TripScorer`: 구간 + 내비 지점 → 항목별 점수, 감점 목록(시각, 위치, 이유, 당시 값), 총점
@@ -28,7 +28,7 @@
 - 깜빡이 없이 30° 꺾었다 되돌림 → 차선변경 + "깜빡이 미사용" 감점
 - 깜빡이 3초 전 + 200° 저속 → 우회전, 감점 없음 (숙련 등급)
 - 직선에서 ±15° 1.5초 → 숙련 등급 직선 안정성 감점, 초보 등급은 감점 없음
-- 브레이크 0→100% 0.3초 → 급정지 감점
+- 페달 ON + 감속도가 등급 기준 초과 → 급정지 감점
 - 같은 운전이 등급이 오르면 점수가 내려감
 - 커브(같은 방향 20° 10초 유지, 깜빡이 없음)는 감점 없음
 - "오늘은 아내가 운전해" → SWITCH_DRIVER
@@ -70,12 +70,13 @@
 - [ ] (사용자) 화면 녹화, 기획서 작성, 이메일 제출
 
 ### 시연 영상 흐름 (약 2분)
+0. (준비) 시연 프로필을 숙련 등급으로 시드
 1. 목적지 설정 → 경로 위 미션 지점 + 음성 브리핑
 2. 기어 D → 화면 꺼짐, 기록 시작
 3. Virtual Console: 깜빡이 없이 조향 30° 후 복귀 → 깜빡이 없는 차선변경
 4. 직선 구간 조향 ±15° 흔들기 → 직선 안정성 감점
 5. 깜빡이 켜고 3초 뒤 조향 200° → 정상 우회전
-6. 브레이크 100% 급입력 → 급정지 감점
+6. 시나리오 급감속 구간에서 브레이크 100% → 급정지 감점
 7. 기어 P → 하이라이트 리플레이 (정상 구간 빠르게, 감점 구간 느리게)
 8. 결과 화면 + 음성 디브리핑
 9. "왜 감점됐어?" → 음성 응답
