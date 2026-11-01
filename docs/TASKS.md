@@ -5,13 +5,14 @@
 
 ## M0. 프로젝트 뼈대 (11/1~11/2)
 
-- [ ] Gradle 멀티모듈: `:app`(Android, AAOS), `:scoring`(순수 Kotlin JVM)
-- [ ] `:app` 설정: minSdk 28, compile/targetSdk 34, Compose, Hilt, Room, Coroutines
-- [ ] `AndroidManifest.xml`: `android.hardware.type.automotive` uses-feature, `distractionOptimized` 메타데이터는 주행 중에도 떠 있어야 하는 화면에만
-- [ ] Pleos SDK 의존성: 저장소·좌표를 문서에서 확인. **확인 안 되면 멈추지 말고** 어댑터를 `TODO`로 두고 M1로 진행, 사용자에게 보고
-- [ ] `.gitignore`, README(앱 이름, 한 줄 소개, 실행 방법, 테스트 환경, APK 위치 — 공모전 필수 항목)
+- [x] Gradle 멀티모듈: `:app`(Android, AAOS), `:scoring`(순수 Kotlin JVM)
+- [x] `:app` 설정: minSdk 28, compile/targetSdk 34, Compose, Hilt, Room, Coroutines
+- [x] `AndroidManifest.xml`: `android.hardware.type.automotive` uses-feature, `distractionOptimized` 메타데이터는 주행 중에도 떠 있어야 하는 화면에만
+- [x] Pleos SDK 의존성: 저장소·좌표를 문서에서 확인. **확인 안 되면 멈추지 말고** 어댑터를 `TODO`로 두고 M1로 진행, 사용자에게 보고
+- [x] `.gitignore`, README(앱 이름, 한 줄 소개, 실행 방법, 테스트 환경, APK 위치 — 공모전 필수 항목)
 
 완료 기준: `./gradlew :scoring:test`와 `./gradlew :app:assembleDebug`가 성공한다.
+(현황: `:scoring:test` 통과. `:app:assembleDebug`는 Android SDK 설치 후 검증 필요)
 
 ## M1. 채점 엔진 `:scoring` (11/2~11/5) ← 가장 중요, 테스트 우선
 
