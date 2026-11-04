@@ -34,7 +34,7 @@ object TripCodec {
     }
 
     fun toPenalty(e: TripEvent) = Penalty(
-        Category.valueOf(e.category), PenaltyReason.valueOf(e.reason), e.t, e.odoM, e.severity,
+        Category.valueOf(e.category), PenaltyReason.valueOf(e.reason), e.t, e.odoM, e.deduction,
         Json.parseToJsonElement(e.observedJson).jsonObject.mapValues { it.value.jsonPrimitive.double },
         e.lat, e.lng,
     )
@@ -59,7 +59,7 @@ suspend fun DriveDao.loadTripDetails(id: Long): TripDetails? {
     return TripDetails(
         trip, items, penalties, track(id),
         previous?.total,
-        BadgeRules.award(trip.total, items, penalties, trip.distanceM, totalsBefore(trip.profileId, trip.startedAtMs)),
+        BadgeRules.award(trip.total, items, penalties, trip.distanceM, totalsBefore(trip.profileId, trip.startedAtMs), trip.challengePassed, trip.lowSample),
         previous?.let { TripCodec.decodeItems(it.itemsJson) }.orEmpty(),
     )
 }

@@ -7,8 +7,8 @@ import kotlin.test.assertTrue
 
 /** TASKS.md M1 완료 기준 7개. */
 class AcceptanceTest {
-    private fun score(b: TripBuilder, rules: GradeRules, markers: List<RouteMarker> = emptyList()) =
-        TripScorer(CFG).score(b.samples, markers, rules = rules)
+    private fun score(b: TripBuilder, markers: List<RouteMarker> = emptyList()) =
+        TripScorer(CFG).score(b.samples, markers)
 
     @Test fun `1 깜빡이 없이 30도 꺾었다 되돌리면 차선변경 + 깜빡이 미사용 감점`() {
         val b = trip {
@@ -17,22 +17,22 @@ class AcceptanceTest {
             ramp(1.5, 50.0, 50.0, 30.0, 0.0)
             hold(10.0, 50.0)
         }
-        val r = score(b, BEGINNER)
+        val r = score(b)
         assertEquals(1, r.maneuvers.count { it.type == ManeuverType.LANE_CHANGE })
-        assertTrue(r.penalties.any { it.category == Category.LANE_CHANGE && it.reason == PenaltyReason.SIGNAL_MISSING })
+        assertTrue(r.penalties.any { it.category == Category.SIGNAL && it.reason == PenaltyReason.SIGNAL_MISSING })
     }
 
-    @Test fun `2 깜빡이 3초 전 + 200도 저속이면 우회전이고 숙련 등급 감점 없음`() {
+    @Test fun `2 깜빡이 30m 전 + 200도 저속이면 우회전이고 감점 없음`() {
         val b = trip {
             hold(10.0, 20.0)
             signal(TurnSignal.RIGHT)
-            hold(3.0, 15.0)
+            hold(8.0, 15.0)
             ramp(2.0, 15.0, 15.0, 0.0, 200.0)
             ramp(2.0, 15.0, 15.0, 200.0, 0.0)
             signal(TurnSignal.OFF)
             hold(10.0, 20.0)
         }
-        val r = score(b, SKILLED)
+        val r = score(b)
         assertEquals(1, r.maneuvers.count { it.type == ManeuverType.TURN_RIGHT })
         assertEquals(emptyList(), r.penalties)
         assertEquals(100, r.total)
@@ -45,10 +45,9 @@ class AcceptanceTest {
         hold(10.0, 50.0)
     }
 
-    @Test fun `3 직선 ±15도 1_5초는 숙련 감점, 초보 감점 없음`() {
-        assertTrue(score(shake15(), SKILLED).penalties.any { it.category == Category.STRAIGHT })
-        assertFalse(score(shake15(), BEGINNER).penalties.any { it.category == Category.STRAIGHT })
-        assertEquals(0, score(shake15(), SKILLED).maneuvers.count { it.type == ManeuverType.LANE_CHANGE })
+    @Test fun `3 50kmh 직선 ±15도 1_5초는 흔들림이고 차선변경이 아니다`() {
+        assertTrue(score(shake15()).penalties.any { it.category == Category.STEERING })
+        assertEquals(0, score(shake15()).maneuvers.count { it.type == ManeuverType.LANE_CHANGE })
     }
 
     @Test fun `4 페달 ON + 감속도 기준 초과면 급정지 감점`() {
@@ -57,22 +56,7 @@ class AcceptanceTest {
             ramp(2.5, 60.0, 0.0, brake = true)
             hold(3.0, 0.0, brake = true)
         }
-        assertTrue(score(b, BEGINNER).penalties.any { it.reason == PenaltyReason.HARD_BRAKE })
-    }
-
-    @Test fun `5 같은 운전이 등급이 오르면 점수가 내려감`() {
-        fun drive() = trip {
-            hold(20.0, 50.0)
-            signal(TurnSignal.LEFT); hold(1.5, 50.0)
-            ramp(1.5, 50.0, 50.0, 0.0, -25.0); ramp(1.5, 50.0, 50.0, -25.0, 0.0)
-            signal(TurnSignal.OFF)
-            hold(20.0, 50.0)
-            hold(1.5, 50.0, 12.0)
-            hold(20.0, 50.0)
-        }
-        val low = score(drive(), BEGINNER).total
-        val high = score(drive(), SKILLED).total
-        assertTrue(high < low, "beginner=$low skilled=$high")
+        assertTrue(score(b).penalties.any { it.reason == PenaltyReason.HARD_BRAKE })
     }
 
     @Test fun `6 같은 방향 20도 10초 유지 커브는 감점 없음`() {
@@ -83,7 +67,7 @@ class AcceptanceTest {
             ramp(0.5, 60.0, 60.0, 20.0, 0.0)
             hold(10.0, 60.0)
         }
-        val r = score(b, MASTER)
+        val r = score(b)
         assertEquals(1, r.maneuvers.count { it.type == ManeuverType.CURVE })
         assertEquals(emptyList(), r.penalties)
     }

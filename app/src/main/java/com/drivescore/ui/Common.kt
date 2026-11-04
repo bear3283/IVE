@@ -33,11 +33,10 @@ fun RecordingCover() {
 
 @StringRes
 fun Category.label() = when (this) {
-    Category.TURN -> R.string.category_turn
-    Category.LANE_CHANGE -> R.string.category_lane
+    Category.SIGNAL -> R.string.category_signal
     Category.SMOOTH -> R.string.category_smooth
     Category.CAMERA -> R.string.category_camera
-    Category.STRAIGHT -> R.string.category_straight
+    Category.STEERING -> R.string.category_straight
     Category.DECEL_PREP -> R.string.category_decel
 }
 
@@ -45,7 +44,7 @@ fun Category.label() = when (this) {
 fun Badge.label() = when (this) {
     Badge.NO_PENALTY -> R.string.badge_no_penalty
     Badge.SIGNAL_PERFECT -> R.string.badge_signal
-    Badge.TURN_PERFECT -> R.string.badge_turn
+    Badge.GRADE_CHALLENGE -> R.string.badge_challenge
     Badge.PERSONAL_BEST -> R.string.badge_best
 }
 
@@ -61,7 +60,7 @@ fun gradeLabel(name: String) = when (runCatching { Grade.valueOf(name) }.getOrDe
 fun Penalty.describe(): String {
     val mps2 = observed["mps2"]
     val peak = observed["peakDeg"]
-    val lead = observed["leadSec"]
+    val lead = observed["leadM"]
     return when (reason) {
         PenaltyReason.SIGNAL_MISSING -> stringResource(R.string.reason_signal_missing)
         PenaltyReason.SIGNAL_LATE -> lead?.let { stringResource(R.string.reason_signal_late_at, it) } ?: stringResource(R.string.reason_signal_late)

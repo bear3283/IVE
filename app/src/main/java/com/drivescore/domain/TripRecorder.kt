@@ -236,7 +236,7 @@ class TripRecorder @Inject constructor(
         val profile = ensureProfile()
         val computed = GradeEngine().evaluate(dao.totals(profile.id)).current
         val grade = maxOf(computed, Grade.valueOf(profile.minGrade))
-        val result = TripScorer().score(samples, markers, caps, GradeRules.forGrade(grade))
+        val result = TripScorer().score(samples, markers, caps)
         val courseId = nav?.destination?.value?.let { matchCourse(profile.id, it.name, it.lat, it.lng, markers) }
         val track = TrackReducer.reduce(samples, result.penalties)
         val trip = Trip(
@@ -246,10 +246,11 @@ class TripRecorder @Inject constructor(
             durationSec = samples.lastOrNull()?.t ?: 0.0,
             distanceM = samples.lastOrNull()?.odoM ?: 0.0,
             total = result.total,
-            difficulty = result.difficulty,
             grade = grade.name,
             itemsJson = TripCodec.encodeItems(result.items),
-            excluded = skipNextTrip.also { skipNextTrip = false },
+            excluded = skipNextTrip.also { skipNextTrip = false } || result.lowSample,
+            lowSample = result.lowSample,
+            challengePassed = BadgeRules.challengePassed(GradeRules.forGrade(grade), result),
         )
         return dao.saveTrip(
             trip,
@@ -291,7 +292,7 @@ class TripRecorder @Inject constructor(
     }
 
     private fun Penalty.toEntity(tripId: Long) = TripEvent(
-        tripId = tripId, category = category.name, reason = reason.name, t = t, odoM = odoM, severity = severity,
+        tripId = tripId, category = category.name, reason = reason.name, t = t, odoM = odoM, deduction = deduction,
         observedJson = JsonObject(observed.mapValues { JsonPrimitive(it.value) }).toString(), lat = lat, lng = lng,
     )
 
