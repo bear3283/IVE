@@ -82,6 +82,12 @@ Virtual Console은 `adb forward tcp:8088 tcp:8088` 후 브라우저에서 `http:
 
 Pleos Connect Emulator v2.1.0 (API 34, Automotive, Cold boot, RAM 4GB), 2560×1440 가로.
 
+필요한 설정:
+
+1. APK 설치: `adb install -r apk/Bear_IVECORE_release.apk`
+2. 첫 실행 때 차속, 마이크, 알림 권한을 허용한다.
+3. 기본 신호 소스는 시연용 "하이브리드"(시나리오 "시연 2분")다. Virtual Console을 열어 둔 뒤 위 "시연 방법"대로 조작한다. 실차에서는 설정에서 신호 소스를 실차로 바꾼다.
+
 ## 구현 상태
 
 에뮬레이터 기준이며 실차 주행은 아직 검증하지 않았다.
