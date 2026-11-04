@@ -49,7 +49,7 @@ class ReplayTimeline(val segments: List<ReplaySegment>) {
 
             // 감점이 많아 길이를 넘으면 심각도가 높은 것만 1배속으로 남긴다.
             var windows = emptyList<ClosedFloatingPointRange<Double>>()
-            penalties.sortedWith(compareByDescending<Penalty> { it.severity }.thenBy { it.t }).forEach { p ->
+            penalties.sortedWith(compareByDescending<Penalty> { it.deduction }.thenBy { it.t }).forEach { p ->
                 val candidate = merge(windows + ((p.t - config.windowSec).coerceAtLeast(0.0)..min(p.t + config.windowSec, durationSec)))
                 if (candidate.sumOf { it.endInclusive - it.start } <= config.targetPlaySec) windows = candidate
             }

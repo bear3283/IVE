@@ -7,18 +7,17 @@
     <string name="source_hybrid">하이브리드</string>
     <string name="scenario_demo">시연 2분</string>
     <string name="scenario_commute">출근 코스</string>
-    <string name="demo_seed">숙련 기준으로 시작</string>
+    <string name="demo_seed">숙련 등급으로 시작</string>
     <string name="restart">다시 시작</string>
     <string name="limits_notice">신호 준수, 보행자 보호, 차간 거리는 평가하지 않아요. 기록은 이 기기에만 저장돼요.</string>
-    <string name="category_turn">회전</string>
-    <string name="category_lane">차선변경</string>
+    <string name="category_signal">깜빡이</string>
     <string name="category_smooth">급출발·급정지</string>
     <string name="category_camera">카메라 구간</string>
-    <string name="category_straight">직선 안정성</string>
+    <string name="category_straight">조향 안정</string>
     <string name="category_decel">감속 준비</string>
     <string name="reason_signal_missing">깜빡이 없이 움직였어요</string>
     <string name="reason_signal_late">깜빡이가 늦었어요</string>
-    <string name="reason_signal_late_at">깜빡이가 %1$.1f초 전에 켜졌어요</string>
+    <string name="reason_signal_late_at">깜빡이가 %1$.0f미터 전에 켜졌어요</string>
     <string name="reason_not_cancelled">깜빡이를 끄지 않았어요</string>
     <string name="reason_slowdown">회전 전에 충분히 줄이지 않았어요</string>
     <string name="reason_abrupt">핸들을 갑자기 돌렸어요</string>
@@ -33,13 +32,13 @@
     <string name="reason_too_slow">흐름보다 너무 느렸어요</string>
     <string name="badge_no_penalty">무감점</string>
     <string name="badge_signal">깜빡이 완벽</string>
-    <string name="badge_turn">회전 완벽</string>
+    <string name="badge_challenge">등급 과제 달성</string>
     <string name="badge_best">최고 기록</string>
     <string name="grade_beginner">초보</string>
     <string name="grade_skilled">숙련</string>
     <string name="grade_veteran">베테랑</string>
     <string name="grade_master">마스터</string>
-    <string name="grade_line">%1$s 기준</string>
+    <string name="grade_line">%1$s 등급</string>
     <string name="points_unit">점</string>
     <string name="compare_up">지난번보다 %1$d점 올랐어요</string>
     <string name="compare_down">지난번보다 %1$d점 내렸어요</string>
@@ -59,8 +58,7 @@
     <string name="voice_brief_known">%1$s 코스예요. 지난번 %2$d점, 최고 %3$d점이에요.</string>
     <string name="voice_brief_mission">오늘 미션은 %1$s예요.</string>
     <string name="voice_brief_new">회전 %1$d번, 카메라 %2$d곳이 있는 코스예요. 안전운전 시작할게요.</string>
-    <string name="mission_turn">회전 전에 깜빡이 켜고 줄이기</string>
-    <string name="mission_lane">차선 바꾸기 전에 깜빡이 켜기</string>
+    <string name="mission_signal">회전과 차선 변경 30미터 전에 깜빡이 켜기</string>
     <string name="mission_smooth">부드럽게 멈추기</string>
     <string name="mission_camera">카메라 구간 제한속도 지키기</string>
     <string name="mission_straight">직선에서 핸들 안정시키기</string>
@@ -103,4 +101,6 @@
     <string name="penalties_more">외 %1$d건</string>
     <string name="action_back">돌아가기</string>
     <string name="demo_title">시연 설정</string>
+    <string name="low_sample">표본이 적어 기록과 등급에 넣지 않았어요</string>
+    <string name="deduction_points">−%1$d점</string>
 </resources>

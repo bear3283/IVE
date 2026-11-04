@@ -5,8 +5,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ManeuverClassifierTest {
-    private fun classify(b: TripBuilder, rules: GradeRules = SKILLED, markers: List<RouteMarker> = emptyList()) =
-        ManeuverClassifier(CFG).classify(b.samples, markers, rules)
+    private fun classify(b: TripBuilder, markers: List<RouteMarker> = emptyList()) =
+        ManeuverClassifier(CFG).classify(b.samples, markers)
 
     @Test fun `왼쪽 회전과 유턴 구분`() {
         val left = trip { hold(5.0, 15.0); ramp(2.0, 15.0, 15.0, 0.0, -200.0); ramp(2.0, 15.0, 15.0, -200.0, 0.0); hold(5.0, 15.0) }
@@ -47,17 +47,46 @@ class ManeuverClassifierTest {
 
     @Test fun `정차 중 조향은 동작이 아니다`() {
         val b = trip { hold(5.0, 0.0); ramp(2.0, 0.0, 0.0, 0.0, 300.0); ramp(2.0, 0.0, 0.0, 300.0, 0.0); hold(5.0, 0.0) }
-        assertTrue(classify(b, MASTER).all { it.type == ManeuverType.STRAIGHT })
+        assertTrue(classify(b).all { it.type == ManeuverType.STRAIGHT })
     }
 
     @Test fun `steeringSign으로 부호를 뒤집는다`() {
         val b = trip { hold(5.0, 15.0); ramp(2.0, 15.0, 15.0, 0.0, 200.0); ramp(2.0, 15.0, 15.0, 200.0, 0.0); hold(5.0, 15.0) }
-        val r = ManeuverClassifier(CFG.copy(steeringSign = -1)).classify(b.samples, emptyList(), SKILLED)
+        val r = ManeuverClassifier(CFG.copy(steeringSign = -1)).classify(b.samples, emptyList())
         assertTrue(r.any { it.type == ManeuverType.TURN_LEFT })
     }
 
     @Test fun `구간은 시간 순으로 빈틈없이 이어진다`() {
         val m = classify(trip { hold(5.0, 15.0); ramp(2.0, 15.0, 15.0, 0.0, 200.0); ramp(2.0, 15.0, 15.0, 200.0, 0.0); hold(5.0, 15.0) })
         m.zipWithNext { a, b -> assertEquals(a.endT, b.startT, 0.11) }
+    }
+
+    @Test fun `고속에서는 작은 각도의 S자 조향도 차선변경이다`() {
+        val b = trip {
+            hold(5.0, 100.0)
+            ramp(1.0, 100.0, 100.0, 0.0, 4.0); ramp(2.0, 100.0, 100.0, 4.0, -4.0); ramp(1.0, 100.0, 100.0, -4.0, 0.0)
+            hold(5.0, 100.0)
+        }
+        assertEquals(1, classify(b).count { it.type == ManeuverType.LANE_CHANGE })
+    }
+
+    @Test fun `고속의 작은 한 방향 조향은 커브로 보고 차선변경이나 흔들림으로 보지 않는다`() {
+        val b = trip {
+            hold(5.0, 100.0)
+            ramp(1.0, 100.0, 100.0, 0.0, 5.0); hold(3.0, 100.0, 5.0); ramp(1.0, 100.0, 100.0, 5.0, 0.0)
+            hold(5.0, 100.0)
+        }
+        val types = classify(b).map { it.type }
+        assertEquals(0, types.count { it == ManeuverType.LANE_CHANGE || it == ManeuverType.WOBBLE }, "$types")
+    }
+
+    @Test fun `같은 흔들림도 저속이면 흔들림이 아니다`() {
+        fun b(speed: Double) = trip {
+            hold(5.0, speed)
+            repeat(4) { hold(0.6, speed, 12.0); hold(0.6, speed, -12.0) }
+            hold(5.0, speed)
+        }
+        assertEquals(0, classify(b(20.0)).count { it.type == ManeuverType.WOBBLE })
+        assertEquals(1, classify(b(60.0)).count { it.type == ManeuverType.WOBBLE })
     }
 }

@@ -63,11 +63,13 @@ class Route:
 
     def turn(self, id, side, peak=200.0, signal_sec=4.0, target=15.0, then=45.0, use_signal=True, cue=None):
         name = "TURN_RIGHT" if side > 0 else "TURN_LEFT"
-        self.drive(6, to=target)
+        # 감속 중간부터 깜빡이를 켜서 법 기준(30m 전)을 지킨다.
+        self.drive(3, to=(self.v + target) / 2)
         if use_signal:
             self.signal = "RIGHT" if side > 0 else "LEFT"
         if cue:
             self.cue(cue)
+        self.drive(3, to=target)
         self.drive(signal_sec)
         self.mark(id, name)
         self.drive(4, steer=lambda f: side * peak * math.sin(math.pi * f), turn=side * 90)
@@ -102,7 +104,7 @@ def demo_short():
     r.cue("조향 ±15° 좌우로 1초씩 3번 흔들기")
     r.wobble()
     r.drive(8)
-    r.turn("turn-1", +1, cue="깜빡이 오른쪽 → 4초 뒤 조향 +200° → 0° 복귀 → 깜빡이 끄기")
+    r.turn("turn-1", +1, cue="깜빡이 오른쪽 → 7초 뒤 조향 +200° → 0° 복귀 → 깜빡이 끄기")
     r.drive(10)
     r.mark("cam-1", "SPEED_CAMERA", 60)
     r.drive(10)

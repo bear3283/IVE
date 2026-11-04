@@ -13,7 +13,7 @@ class TripDetailsTest {
         TrackPoint(0, 1, t, odo, 30.0, steer, "OFF", false, lat, lng)
 
     @Test fun `항목 점수는 저장 후 그대로 읽힌다`() {
-        val items = listOf(ItemScore(Category.TURN, 25.0, 12.5, 3, false), ItemScore(Category.CAMERA, 15.0, 15.0, 5, true))
+        val items = listOf(ItemScore(Category.SIGNAL, 25.0, 12.5, 3, false), ItemScore(Category.CAMERA, 15.0, 15.0, 5, true))
         assertEquals(items, TripCodec.decodeItems(TripCodec.encodeItems(items)))
     }
 
